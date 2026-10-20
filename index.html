@@ -1,15 +1,19 @@
 <!DOCTYPE html>
-<html lang="de" class="dark">
+<html lang="de" class="dark h-full">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Getränkelager Verwaltung</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Getränkelager Mobil</title>
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
   <!-- Google Font Inter -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -20,329 +24,310 @@
           },
           colors: {
             brand: {
-              50: '#f0f9ff',
-              100: '#e0f2fe',
-              500: '#0ea5e9',
-              600: '#0284c7',
-              700: '#0369a1',
-              800: '#075985',
-              900: '#0c4a6e',
+              bg: '#09090b',       // Zinc-950
+              card: '#18181b',     // Zinc-900
+              border: '#27272a',   // Zinc-800
+              accent: '#3b82f6',   // Blue-500
+              amber: '#f59e0b',    // Amber-500
+              emerald: '#10b981',  // Emerald-500
+              rose: '#f43f5e'      // Rose-500
             }
           }
         }
       }
     }
   </script>
+
   <style>
+    /* iOS Safe Area Padding Helpers */
+    .pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+    .pt-safe { padding-top: max(0.75rem, env(safe-area-inset-top)); }
+    
+    /* Touch Optimierungen */
     body {
-      background-color: #0f172a;
-      color: #f8fafc;
+      background-color: #09090b;
+      color: #f4f4f5;
       font-family: 'Inter', sans-serif;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
     }
-    /* Smooth Scrollbar */
+
+    /* Scrollbar Styling */
     ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
+      width: 4px;
+      height: 4px;
     }
-    ::-webkit-scrollbar-track {
-      background: #1e293b;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #475569;
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #64748b;
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 99px; }
+
+    /* Custom Number Input Hide Spinners */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col bg-slate-950 text-slate-100">
+<body class="h-full flex justify-center bg-black">
 
-  <!-- PIN Protection Overlay -->
-  <div id="pinModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-md transition-opacity duration-300">
-    <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl max-w-sm w-full mx-4 text-center transform transition-all scale-100">
-      <div class="w-16 h-16 bg-sky-500/10 border border-sky-500/20 text-sky-400 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
-        <i class="fa-solid fa-lock"></i>
-      </div>
-      <h2 class="text-2xl font-bold mb-2 text-white">Getränkelager</h2>
-      <p class="text-slate-400 text-sm mb-6">Bitte PIN eingeben, um fortzufahren</p>
-      
-      <div class="space-y-4">
-        <input type="password" id="pinInput" placeholder="••••" maxlength="8" class="w-full text-center text-2xl tracking-widest bg-slate-950 border border-slate-700 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 rounded-xl px-4 py-3 text-white outline-none transition-all">
-        <p id="pinError" class="text-rose-500 text-xs hidden flex items-center justify-center gap-1">
-          <i class="fa-solid fa-circle-exclamation"></i> Falsche PIN. Bitte erneut versuchen.
-        </p>
-        <button onclick="checkPin()" class="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-sky-500/20 transition-all flex items-center justify-center gap-2">
-          <span>Entsperren</span>
-          <i class="fa-solid fa-arrow-right text-sm"></i>
-        </button>
-      </div>
-      <p class="text-xs text-slate-500 mt-6">Standard PIN: <code class="bg-slate-800 px-1.5 py-0.5 rounded text-slate-300">1234</code></p>
-    </div>
-  </div>
+  <!-- Main Container: Fixed aspect/width for iPhone 13 mini feel on desktop, fluid on phone -->
+  <div class="w-full max-w-[375px] min-h-full bg-zinc-950 flex flex-col relative border-x border-zinc-900/50 shadow-2xl overflow-x-hidden">
 
-  <!-- Main Application Wrapper (Hidden until unlocked) -->
-  <div id="app" class="hidden flex-col min-h-screen">
-    
-    <!-- Navigation Bar -->
-    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-16">
+    <!-- PIN Protection Overlay -->
+    <div id="pinModal" class="absolute inset-0 z-50 flex flex-col justify-between bg-zinc-950/95 backdrop-blur-xl p-6 pt-safe pb-safe transition-opacity duration-300">
+      <div class="flex-1 flex flex-col justify-center items-center text-center space-y-6">
+        <div class="w-16 h-16 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-2xl flex items-center justify-center shadow-inner">
+          <i data-lucide="lock" class="w-8 h-8"></i>
+        </div>
+        
+        <div>
+          <h2 class="text-2xl font-bold text-white tracking-tight">Getränkelager</h2>
+          <p class="text-xs text-zinc-400 mt-1">Geben Sie Ihre PIN ein</p>
+        </div>
+
+        <div class="w-full space-y-3 max-w-[280px]">
+          <input type="password" id="pinInput" placeholder="••••" maxlength="8" pattern="[0-9]*" inputmode="numeric" 
+            class="w-full text-center text-3xl font-mono tracking-widest bg-zinc-900 border border-zinc-800 focus:border-blue-500 rounded-2xl h-14 text-white outline-none transition-all shadow-inner">
           
-          <!-- Logo & Brand -->
-          <div class="flex items-center gap-3">
-            <div class="p-2 bg-sky-500/10 border border-sky-500/30 rounded-xl text-sky-400">
-              <i class="fa-solid fa-wine-bottle text-xl"></i>
-            </div>
-            <div>
-              <h1 class="font-bold text-lg leading-tight text-white">LagerLogistik</h1>
-              <p class="text-xs text-slate-400">Getränkeverwaltung</p>
-            </div>
-          </div>
+          <p id="pinError" class="text-rose-500 text-xs hidden flex items-center justify-center gap-1 font-medium">
+            <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> PIN ungültig
+          </p>
 
-          <!-- Navigation Tabs -->
-          <nav class="flex space-x-2 bg-slate-950 p-1 rounded-xl border border-slate-800">
-            <button onclick="switchTab('booking')" id="tabBtnBooking" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all bg-sky-600 text-white shadow-md">
-              <i class="fa-solid fa-right-left"></i>
-              <span>Buchen</span>
-            </button>
-            <button onclick="switchTab('inventory')" id="tabBtnInventory" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-slate-200">
-              <i class="fa-solid fa-boxes-stacked"></i>
-              <span>Bestand</span>
-            </button>
-          </nav>
-
-          <!-- Settings & Pin Lock Action -->
-          <div class="flex items-center gap-2">
-            <button onclick="lockApp()" title="Anwendung sperren" class="p-2 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-lg transition-all">
-              <i class="fa-solid fa-lock"></i>
-            </button>
-          </div>
-
+          <button onclick="checkPin()" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-semibold h-12 rounded-2xl shadow-lg shadow-blue-600/20 transition-all flex items-center justify-center gap-2">
+            <span>Entsperren</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
         </div>
       </div>
-    </header>
+    </div>
 
-    <!-- Main Content Area -->
-    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- MAIN APP SCREEN -->
+    <div id="app" class="hidden flex-col flex-1 h-full">
 
-      <!-- TAB 1: BUCHEN (Wareneingang / Warenausgang) -->
-      <section id="tabBooking" class="space-y-6">
-        
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Header (iPhone Notch Friendly) -->
+      <header class="bg-zinc-900/80 backdrop-blur-md border-b border-zinc-800/80 sticky top-0 z-30 pt-safe px-4 pb-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="p-2 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-400">
+              <i data-lucide="wine" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h1 class="font-bold text-sm text-white leading-tight">LagerLogistik</h1>
+              <p class="text-[10px] text-zinc-400 font-medium">V.0</p>
+            </div>
+          </div>
+
+          <button onclick="lockApp()" class="p-2 text-zinc-400 active:text-amber-400 active:bg-zinc-800 rounded-xl transition-all">
+            <i data-lucide="lock" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- Scrollable Main Content -->
+      <main class="flex-1 overflow-y-auto p-4 space-y-5 pb-24">
+
+        <!-- TAB 1: BUCHEN -->
+        <section id="tabBooking" class="space-y-4">
           
-          <!-- Booking Form Container -->
-          <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-            <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-white">
-              <i class="fa-solid fa-dolly text-sky-400"></i> Wareneingang / Warenausgang buchen
-            </h2>
+          <!-- Schnellwahl Header & List -->
+          <div>
+            <div class="flex items-center justify-between mb-2 px-1">
+              <span class="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Schnellwahl</span>
+              <span class="text-[10px] text-zinc-500" id="quickSelectCount">0 Artikel</span>
+            </div>
+            
+            <div id="quickSelectContainer" class="flex gap-2 overflow-x-auto pb-2 scrollbar-none -mx-4 px-4">
+              <!-- Rendered Quick Select Badges -->
+            </div>
+          </div>
 
-            <!-- Quick Selection Carousel/Grid -->
-            <div class="mb-6">
-              <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                Schnellwahl (Erfasste Artikel)
-              </label>
-              <div id="quickSelectContainer" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1 bg-slate-950 rounded-xl border border-slate-800">
-                <!-- Dynamic Quick Selection Buttons -->
-              </div>
+          <!-- Booking Form Card -->
+          <div class="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-4 space-y-4 shadow-xl">
+            <div class="flex items-center gap-2 pb-2 border-b border-zinc-800">
+              <i data-lucide="arrow-left-right" class="w-4 h-4 text-blue-400"></i>
+              <h2 class="text-sm font-bold text-white">Getränk buchen</h2>
             </div>
 
-            <!-- Booking Input Form -->
-            <form id="bookingForm" onsubmit="handleBooking(event)" class="space-y-4">
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-                    Artikel-Nummer *
-                  </label>
-                  <div class="relative">
-                    <input type="text" id="bookingItemNum" required placeholder="z.B. 1001" oninput="onItemNumberChange()" class="w-full bg-slate-950 border border-slate-700 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-xl px-4 py-2.5 text-white outline-none">
-                    <span id="existingItemBadge" class="hidden absolute right-3 top-2.5 text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full">
-                      Erkannt
-                    </span>
-                  </div>
-                </div>
-
-                <div>
-                  <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-                    Anzahl (Stück) *
-                  </label>
-                  <input type="number" id="bookingAmount" min="1" required placeholder="z.B. 12" class="w-full bg-slate-950 border border-slate-700 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-xl px-4 py-2.5 text-white outline-none">
+            <form id="bookingForm" onsubmit="handleBooking(event)" class="space-y-3">
+              <div>
+                <label class="block text-[11px] font-medium text-zinc-400 mb-1">Artikel-Nummer</label>
+                <div class="relative">
+                  <input type="text" id="bookingItemNum" pattern="[0-9]*" inputmode="numeric" required placeholder="z.B. 101" oninput="onItemNumberChange()" 
+                    class="w-full bg-zinc-950 border border-zinc-800 focus:border-blue-500 rounded-xl h-11 px-3 text-sm text-white outline-none font-mono">
+                  <span id="existingItemBadge" class="hidden absolute right-2.5 top-2.5 text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-medium">
+                    Bekannt
+                  </span>
                 </div>
               </div>
 
-              <!-- Preview Info if Item exists -->
-              <div id="itemInfoBox" class="hidden p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-sm space-y-1">
-                <div class="text-slate-400 font-medium">Gefundener Artikel:</div>
-                <div class="text-white font-bold text-base" id="infoBrandSort">-</div>
-                <div class="text-slate-400 text-xs">Füllmenge: <span id="infoVolume" class="text-slate-200"></span>L | Aktueller Bestand: <span id="infoStock" class="text-sky-400 font-semibold"></span> Flaschen</div>
+              <div>
+                <label class="block text-[11px] font-medium text-zinc-400 mb-1">Anzahl (Stück)</label>
+                <input type="number" id="bookingAmount" min="1" required placeholder="1" 
+                  class="w-full bg-zinc-950 border border-zinc-800 focus:border-blue-500 rounded-xl h-11 px-3 text-sm text-white outline-none font-mono">
               </div>
 
-              <!-- Action Buttons -->
-              <div class="flex gap-4 pt-4">
-                <button type="submit" onclick="bookingType='IN'" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-emerald-900/30 transition-all flex items-center justify-center gap-2">
-                  <i class="fa-solid fa-plus"></i> Wareneingang (+ Stk.)
+              <!-- Article Preview Box -->
+              <div id="itemInfoBox" class="hidden p-3 rounded-xl bg-zinc-950 border border-zinc-800/80 space-y-1">
+                <div class="text-[10px] text-zinc-500 font-medium">Erkannter Artikel</div>
+                <div class="text-xs font-bold text-white" id="infoBrandSort">-</div>
+                <div class="text-[11px] text-zinc-400 flex justify-between pt-1">
+                  <span>Füllmenge: <strong id="infoVolume" class="text-zinc-200"></strong>L</span>
+                  <span>Bestand: <strong id="infoStock" class="text-blue-400"></strong> Stk.</span>
+                </div>
+              </div>
+
+              <!-- In/Out Buttons -->
+              <div class="grid grid-cols-2 gap-2.5 pt-2">
+                <button type="submit" onclick="bookingType='IN'" class="h-12 bg-emerald-600 active:bg-emerald-500 active:scale-95 text-white font-semibold rounded-xl text-xs shadow-lg shadow-emerald-900/20 transition-all flex items-center justify-center gap-1.5">
+                  <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                  <span>Eingang (+)</span>
                 </button>
-                <button type="submit" onclick="bookingType='OUT'" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-rose-900/30 transition-all flex items-center justify-center gap-2">
-                  <i class="fa-solid fa-minus"></i> Warenausgang (- Stk.)
+                <button type="submit" onclick="bookingType='OUT'" class="h-12 bg-rose-600 active:bg-rose-500 active:scale-95 text-white font-semibold rounded-xl text-xs shadow-lg shadow-rose-900/20 transition-all flex items-center justify-center gap-1.5">
+                  <i data-lucide="minus-circle" class="w-4 h-4"></i>
+                  <span>Ausgang (-)</span>
                 </button>
               </div>
             </form>
           </div>
 
-          <!-- Quick Stats / Helper Sidebar -->
-          <div class="space-y-6">
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-              <h3 class="text-base font-bold mb-4 text-white flex items-center gap-2">
-                <i class="fa-solid fa-chart-pie text-sky-400"></i> Gesamtlager Kennzahlen
-              </h3>
-              <div class="space-y-4">
-                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800">
-                  <span class="text-xs text-slate-400 block font-medium">Gesamtbestand</span>
-                  <span id="statTotalItems" class="text-2xl font-bold text-white">0</span>
-                  <span class="text-xs text-slate-500"> Flaschen/Dosen</span>
-                </div>
-                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800">
-                  <span class="text-xs text-slate-400 block font-medium">Gesamtes Flüssigkeitsvolumen</span>
-                  <span id="statTotalLiters" class="text-2xl font-bold text-sky-400">0.00</span>
-                  <span class="text-xs text-slate-500"> Liter</span>
-                </div>
-                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800">
-                  <span class="text-xs text-slate-400 block font-medium">Registrierte Marken</span>
-                  <span id="statTotalBrands" class="text-2xl font-bold text-indigo-400">0</span>
-                </div>
-              </div>
+          <!-- Quick Stats Banner -->
+          <div class="grid grid-cols-2 gap-2.5">
+            <div class="bg-zinc-900 border border-zinc-800/80 p-3 rounded-2xl">
+              <span class="text-[10px] text-zinc-500 font-medium block">Gesamtbestand</span>
+              <span id="statTotalItems" class="text-lg font-bold text-white font-mono">0</span>
+              <span class="text-[10px] text-zinc-500"> Flaschen</span>
+            </div>
+            <div class="bg-zinc-900 border border-zinc-800/80 p-3 rounded-2xl">
+              <span class="text-[10px] text-zinc-500 font-medium block">Gesamtvolumen</span>
+              <span id="statTotalLiters" class="text-lg font-bold text-blue-400 font-mono">0.00</span>
+              <span class="text-[10px] text-zinc-500"> Liter</span>
             </div>
           </div>
 
-        </div>
+        </section>
 
-      </section>
+        <!-- TAB 2: BESTAND -->
+        <section id="tabInventory" class="hidden space-y-4">
+          
+          <!-- Search & Backup Toolbar -->
+          <div class="space-y-2">
+            <div class="relative">
+              <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-zinc-500"></i>
+              <input type="text" id="searchInput" oninput="renderInventory()" placeholder="Marke, Sorte oder Nr. suchen..." 
+                class="w-full bg-zinc-900 border border-zinc-800 focus:border-blue-500 rounded-xl pl-9 pr-3 h-10 text-xs text-white outline-none">
+            </div>
 
-      <!-- TAB 2: BESTAND (Lagerübersicht) -->
-      <section id="tabInventory" class="hidden space-y-6">
-        
-        <!-- Controls: Search & Data Export/Import -->
-        <div class="flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl">
-          <!-- Search Bar -->
-          <div class="relative w-full md:w-96">
-            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-500"></i>
-            <input type="text" id="searchInput" oninput="renderInventory()" placeholder="Nach Marke, Sorte oder Nr. suchen..." class="w-full bg-slate-950 border border-slate-700 focus:border-sky-500 rounded-xl pl-10 pr-4 py-2 text-sm text-white outline-none">
+            <!-- Export / Import Compact Buttons -->
+            <div class="grid grid-cols-3 gap-2">
+              <button onclick="exportData('json')" class="h-9 bg-zinc-900 border border-zinc-800 active:bg-zinc-800 rounded-xl text-[11px] font-medium text-zinc-300 flex items-center justify-center gap-1">
+                <i data-lucide="download" class="w-3.5 h-3.5 text-blue-400"></i> JSON
+              </button>
+              <button onclick="exportData('csv')" class="h-9 bg-zinc-900 border border-zinc-800 active:bg-zinc-800 rounded-xl text-[11px] font-medium text-zinc-300 flex items-center justify-center gap-1">
+                <i data-lucide="file-text" class="w-3.5 h-3.5 text-emerald-400"></i> CSV
+              </button>
+              <label class="h-9 bg-zinc-900 border border-zinc-800 active:bg-zinc-800 rounded-xl text-[11px] font-medium text-zinc-300 flex items-center justify-center gap-1 cursor-pointer">
+                <i data-lucide="upload" class="w-3.5 h-3.5 text-amber-400"></i> Import
+                <input type="file" id="importFile" accept=".json" onchange="importData(event)" class="hidden">
+              </label>
+            </div>
           </div>
 
-          <!-- Import / Export Action Buttons -->
-          <div class="flex items-center gap-2 w-full md:w-auto justify-end">
-            <button onclick="exportData('json')" title="Als JSON sichern" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-2 rounded-xl text-xs font-medium transition-all">
-              <i class="fa-solid fa-file-export text-sky-400"></i> Export (JSON)
-            </button>
-            <button onclick="exportData('csv')" title="Als CSV für Excel exportieren" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-2 rounded-xl text-xs font-medium transition-all">
-              <i class="fa-solid fa-file-csv text-emerald-400"></i> Export (CSV)
-            </button>
-            <label title="Sicherung wiederherstellen" class="cursor-pointer flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-2 rounded-xl text-xs font-medium transition-all">
-              <i class="fa-solid fa-file-import text-amber-400"></i> Import
-              <input type="file" id="importFile" accept=".json" onchange="importData(event)" class="hidden">
-            </label>
+          <!-- Inventory List (Grouped by Brand) -->
+          <div id="inventoryContainer" class="space-y-3">
+            <!-- Dynamic Content -->
           </div>
-        </div>
 
-        <!-- Inventory List (Grouped by Brand) -->
-        <div id="inventoryContainer" class="space-y-6">
-          <!-- Dynamic Content Rendered Here -->
-        </div>
+        </section>
 
-      </section>
+      </main>
 
-    </main>
-
-  </div>
-
-  <!-- Modal: First Time Registration Modal -->
-  <div id="newItemModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm hidden">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl max-w-md w-full mx-4">
-      <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
-        <h3 class="text-lg font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-sparkles text-amber-400"></i> Neuer Artikel erfassen
-        </h3>
-        <button onclick="closeNewItemModal()" class="text-slate-400 hover:text-white">
-          <i class="fa-solid fa-xmark text-lg"></i>
+      <!-- Bottom Tab Bar Navigation (iPhone Dock Style) -->
+      <nav class="fixed bottom-0 w-full max-w-[375px] bg-zinc-900/90 backdrop-blur-md border-t border-zinc-800/80 px-6 py-2 pb-safe z-30 flex justify-around">
+        <button onclick="switchTab('booking')" id="tabBtnBooking" class="flex flex-col items-center gap-1 text-blue-400">
+          <i data-lucide="plus-square" class="w-5 h-5"></i>
+          <span class="text-[10px] font-medium">Buchen</span>
         </button>
-      </div>
+        <button onclick="switchTab('inventory')" id="tabBtnInventory" class="flex flex-col items-center gap-1 text-zinc-500">
+          <i data-lucide="boxes" class="w-5 h-5"></i>
+          <span class="text-[10px] font-medium">Bestand</span>
+        </button>
+      </nav>
 
-      <p class="text-xs text-slate-400 mb-4">
-        Artikelnummer <span id="modalItemNum" class="font-mono text-sky-400 font-bold"></span> existiert noch nicht. Bitte Stammdaten ergänzen:
-      </p>
-
-      <form id="newItemForm" onsubmit="saveNewItemAndBook(event)" class="space-y-4">
-        <div>
-          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-            Marke (Hersteller) *
-          </label>
-          <input type="text" id="newBrand" required placeholder="z.B. Coca-Cola, Paulaner" class="w-full bg-slate-950 border border-slate-700 focus:border-sky-500 rounded-xl px-4 py-2 text-sm text-white outline-none">
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-            Sorte (Produkt) *
-          </label>
-          <input type="text" id="newSort" required placeholder="z.B. Zero, Spezi, Helles" class="w-full bg-slate-950 border border-slate-700 focus:border-sky-500 rounded-xl px-4 py-2 text-sm text-white outline-none">
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-            Füllmenge pro Flasche/Dose (in Liter) *
-          </label>
-          <input type="number" step="0.01" min="0.01" id="newVolume" required placeholder="z.B. 0.33 oder 0.5" class="w-full bg-slate-950 border border-slate-700 focus:border-sky-500 rounded-xl px-4 py-2 text-sm text-white outline-none">
-        </div>
-
-        <div class="flex justify-end gap-3 pt-4 border-t border-slate-800">
-          <button type="button" onclick="closeNewItemModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800 transition-all">
-            Abbrechen
-          </button>
-          <button type="submit" class="bg-sky-600 hover:bg-sky-500 text-white px-5 py-2 rounded-xl text-xs font-semibold shadow-lg shadow-sky-600/30 transition-all">
-            Speichern & Buchen
-          </button>
-        </div>
-      </form>
     </div>
+
+    <!-- First Time Item Registration Modal -->
+    <div id="newItemModal" class="absolute inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm hidden">
+      <div class="bg-zinc-900 border-t border-zinc-800 rounded-t-3xl p-5 w-full space-y-4 animate-in slide-in-from-bottom duration-200">
+        <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+          <div class="flex items-center gap-2">
+            <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i>
+            <h3 class="text-sm font-bold text-white">Neuer Artikel #<span id="modalItemNum"></span></h3>
+          </div>
+          <button onclick="closeNewItemModal()" class="text-zinc-400 p-1">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <form id="newItemForm" onsubmit="saveNewItemAndBook(event)" class="space-y-3">
+          <div>
+            <label class="block text-[11px] font-medium text-zinc-400 mb-1">Marke *</label>
+            <input type="text" id="newBrand" required placeholder="z.B. Coca-Cola" class="w-full bg-zinc-950 border border-zinc-800 focus:border-blue-500 rounded-xl h-10 px-3 text-xs text-white outline-none">
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-medium text-zinc-400 mb-1">Sorte *</label>
+            <input type="text" id="newSort" required placeholder="z.B. Zero" class="w-full bg-zinc-950 border border-zinc-800 focus:border-blue-500 rounded-xl h-10 px-3 text-xs text-white outline-none">
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-medium text-zinc-400 mb-1">Füllmenge (Liter) *</label>
+            <input type="number" step="0.01" min="0.01" id="newVolume" required placeholder="z.B. 0.33" class="w-full bg-zinc-950 border border-zinc-800 focus:border-blue-500 rounded-xl h-10 px-3 text-xs text-white outline-none font-mono">
+          </div>
+
+          <div class="pt-2 flex gap-2">
+            <button type="button" onclick="closeNewItemModal()" class="flex-1 h-11 rounded-xl text-xs font-semibold text-zinc-400 bg-zinc-950 border border-zinc-800">
+              Abbrechen
+            </button>
+            <button type="submit" class="flex-1 h-11 bg-blue-600 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-600/20">
+              Speichern & Buchen
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="absolute top-4 left-4 right-4 z-50 flex items-center gap-2.5 bg-zinc-900/95 border border-zinc-700 text-white px-3.5 py-3 rounded-2xl shadow-2xl transform -translate-y-20 opacity-0 transition-all duration-300">
+      <i id="toastIcon" data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400 shrink-0"></i>
+      <span id="toastMessage" class="text-xs font-medium">Aktion abgeschlossen</span>
+    </div>
+
   </div>
 
-  <!-- Notification Toast -->
-  <div id="toast" class="fixed bottom-5 right-5 z-50 flex items-center gap-3 bg-slate-900 border border-slate-700 text-white px-4 py-3 rounded-xl shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300">
-    <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
-    <span id="toastMessage" class="text-sm font-medium">Aktion erfolgreich</span>
-  </div>
-
-  <!-- Application Logic JavaScript -->
   <script>
-    // Configuration & State
-    const CONFIG = {
-      PIN: "1234" // Default PIN (Anpassbar)
-    };
+    // System Config
+    const CONFIG = { PIN: "1234" };
+    const STORAGE_KEY = "getraenkelager_iphone_db";
 
-    // Storage Key
-    const STORAGE_KEY = "getraenkelager_db_v1";
-
-    // Application State
     let inventory = {};
-    let bookingType = 'IN'; // 'IN' or 'OUT'
+    let bookingType = 'IN';
     let pendingBooking = null;
 
-    // Initialize App
     window.onload = function() {
+      lucide.createIcons();
       loadInventory();
       renderQuickSelect();
       updateStats();
     };
 
-    // PIN Authentication
     function checkPin() {
       const pinInput = document.getElementById('pinInput');
       const pinError = document.getElementById('pinError');
       
       if (pinInput.value === CONFIG.PIN) {
         document.getElementById('pinModal').classList.add('opacity-0', 'pointer-events-none');
-        setTimeout(() => {
-          document.getElementById('pinModal').classList.add('hidden');
-        }, 300);
+        setTimeout(() => document.getElementById('pinModal').classList.add('hidden'), 300);
         document.getElementById('app').classList.remove('hidden');
         document.getElementById('app').classList.add('flex');
         pinError.classList.add('hidden');
@@ -360,23 +345,17 @@
       document.getElementById('app').classList.remove('flex');
     }
 
-    // LocalStorage Management
     function loadInventory() {
       const data = localStorage.getItem(STORAGE_KEY);
       if (data) {
-        try {
-          inventory = JSON.parse(data);
-        } catch (e) {
-          console.error("Fehler beim Laden der Lagerdaten", e);
-          inventory = {};
-        }
+        try { inventory = JSON.parse(data); } catch (e) { inventory = {}; }
       } else {
-        // Sample Initial Data if empty
+        // Sample Initial Data
         inventory = {
-          "1001": { brand: "Coca-Cola", sort: "Original", volume: 0.33, stock: 24 },
-          "1002": { brand: "Coca-Cola", sort: "Zero", volume: 0.33, stock: 12 },
-          "2001": { brand: "Paulaner", sort: "Spezi", volume: 0.5, stock: 40 },
-          "3001": { brand: "Augustiner", sort: "Edelstoff", volume: 0.5, stock: 0 }
+          "101": { brand: "Coca-Cola", sort: "Zero", volume: 0.33, stock: 20 },
+          "102": { brand: "Coca-Cola", sort: "Original", volume: 0.33, stock: 12 },
+          "201": { brand: "Paulaner", sort: "Spezi", volume: 0.5, stock: 36 },
+          "301": { brand: "Red Bull", sort: "Energy", volume: 0.25, stock: 0 }
         };
         saveInventory();
       }
@@ -389,7 +368,6 @@
       updateStats();
     }
 
-    // Tab Navigation
     function switchTab(tab) {
       const bookingTab = document.getElementById('tabBooking');
       const inventoryTab = document.getElementById('tabInventory');
@@ -399,21 +377,17 @@
       if (tab === 'booking') {
         bookingTab.classList.remove('hidden');
         inventoryTab.classList.add('hidden');
-        
-        tabBtnBooking.className = "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all bg-sky-600 text-white shadow-md";
-        tabBtnInventory.className = "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-slate-200";
+        tabBtnBooking.className = "flex flex-col items-center gap-1 text-blue-400";
+        tabBtnInventory.className = "flex flex-col items-center gap-1 text-zinc-500";
       } else {
         bookingTab.classList.add('hidden');
         inventoryTab.classList.remove('hidden');
-
-        tabBtnInventory.className = "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all bg-sky-600 text-white shadow-md";
-        tabBtnBooking.className = "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-slate-200";
-        
+        tabBtnInventory.className = "flex flex-col items-center gap-1 text-blue-400";
+        tabBtnBooking.className = "flex flex-col items-center gap-1 text-zinc-500";
         renderInventory();
       }
     }
 
-    // Item Input & Helper Preview
     function onItemNumberChange() {
       const num = document.getElementById('bookingItemNum').value.trim();
       const badge = document.getElementById('existingItemBadge');
@@ -437,40 +411,41 @@
       document.getElementById('bookingAmount').focus();
     }
 
-    // Render Quick Select Badges
     function renderQuickSelect() {
       const container = document.getElementById('quickSelectContainer');
+      const countEl = document.getElementById('quickSelectCount');
       container.innerHTML = '';
 
       const keys = Object.keys(inventory);
+      countEl.innerText = `${keys.length} Artikel`;
+
       if (keys.length === 0) {
-        container.innerHTML = `<span class="text-xs text-slate-500 p-2">Noch keine Artikel erfasst</span>`;
+        container.innerHTML = `<span class="text-[11px] text-zinc-600">Keine Artikel erfasst</span>`;
         return;
       }
 
       keys.forEach(num => {
         const item = inventory[num];
-        // Format: First 3 letters of Brand + Sorte (e.g. "COC - Zero")
+        // Formatting: First 3 letters of Brand + Sorte (e.g. "COC - Zero")
         const brandCode = item.brand.substring(0, 3).toUpperCase();
         const label = `${brandCode} - ${item.sort}`;
 
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.onclick = () => selectQuickItem(num);
-        btn.className = `px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 border transition-all ${
+        btn.className = `shrink-0 h-8 px-3 rounded-xl text-[11px] font-semibold flex items-center gap-1.5 border transition-all ${
           item.stock > 0 
-            ? 'bg-slate-900 border-slate-700 text-slate-200 hover:border-sky-500 hover:text-sky-400' 
-            : 'bg-slate-900/50 border-slate-800 text-slate-500 hover:border-slate-700'
+            ? 'bg-zinc-900 border-zinc-800 text-zinc-200 active:bg-zinc-800' 
+            : 'bg-zinc-900/40 border-zinc-900 text-zinc-600'
         }`;
         btn.innerHTML = `
           <span>${label}</span>
-          <span class="text-[10px] px-1.5 py-0.2 rounded-full ${item.stock > 0 ? 'bg-sky-500/20 text-sky-400' : 'bg-slate-800 text-slate-500'}">${item.stock}</span>
+          <span class="text-[9px] px-1.5 py-0.2 rounded-full ${item.stock > 0 ? 'bg-blue-500/20 text-blue-400' : 'bg-zinc-800 text-zinc-600'}">${item.stock}</span>
         `;
         container.appendChild(btn);
       });
     }
 
-    // Handle Booking Form Submission
     function handleBooking(e) {
       e.preventDefault();
       const num = document.getElementById('bookingItemNum').value.trim();
@@ -479,12 +454,10 @@
       if (!num || isNaN(amount) || amount <= 0) return;
 
       if (inventory[num]) {
-        // Item exists -> Perform Stock Adjustment
         executeStockBooking(num, amount, bookingType);
       } else {
-        // Item does not exist -> Open Modal to capture item details
         pendingBooking = { num, amount, type: bookingType };
-        document.getElementById('modalItemNum').innerText = `#${num}`;
+        document.getElementById('modalItemNum').innerText = num;
         document.getElementById('newItemModal').classList.remove('hidden');
         document.getElementById('newBrand').focus();
       }
@@ -494,13 +467,13 @@
       const item = inventory[num];
       if (type === 'IN') {
         item.stock += amount;
-        showToast(`+${amount} Stk. ${item.brand} (${item.sort}) gebucht`, 'success');
+        showToast(`+${amount} Stk. ${item.brand} gebucht`);
       } else {
         if (item.stock < amount) {
-          showToast(`Achtung: Bestand unterschritten! (${item.stock} vorhanden)`, 'warning');
+          showToast(`Bestand unterschritten!`, 'warning');
         }
         item.stock = Math.max(0, item.stock - amount);
-        showToast(`-${amount} Stk. ${item.brand} (${item.sort}) entnommen`, 'info');
+        showToast(`-${amount} Stk. ${item.brand} entnommen`);
       }
 
       saveInventory();
@@ -508,7 +481,6 @@
       onItemNumberChange();
     }
 
-    // Modal Actions
     function saveNewItemAndBook(e) {
       e.preventDefault();
       if (!pendingBooking) return;
@@ -519,14 +491,7 @@
 
       if (!brand || !sort || isNaN(volume)) return;
 
-      // Register new item
-      inventory[pendingBooking.num] = {
-        brand: brand,
-        sort: sort,
-        volume: volume,
-        stock: 0
-      };
-
+      inventory[pendingBooking.num] = { brand, sort, volume, stock: 0 };
       closeNewItemModal();
       executeStockBooking(pendingBooking.num, pendingBooking.amount, pendingBooking.type);
       pendingBooking = null;
@@ -537,15 +502,12 @@
       document.getElementById('newItemForm').reset();
     }
 
-    // Render Inventory Table Grouped by Brand
     function renderInventory() {
       const container = document.getElementById('inventoryContainer');
       const searchQuery = document.getElementById('searchInput')?.value.toLowerCase() || '';
       container.innerHTML = '';
 
-      // Grouping by Brand
       const grouped = {};
-
       Object.keys(inventory).forEach(num => {
         const item = inventory[num];
         const match = item.brand.toLowerCase().includes(searchQuery) || 
@@ -553,9 +515,7 @@
                       num.toLowerCase().includes(searchQuery);
 
         if (match) {
-          if (!grouped[item.brand]) {
-            grouped[item.brand] = [];
-          }
+          if (!grouped[item.brand]) grouped[item.brand] = [];
           grouped[item.brand].push({ num, ...item });
         }
       });
@@ -564,9 +524,8 @@
 
       if (brandNames.length === 0) {
         container.innerHTML = `
-          <div class="text-center py-12 bg-slate-900 border border-slate-800 rounded-2xl text-slate-500">
-            <i class="fa-solid fa-box-open text-4xl mb-3 block"></i>
-            <p>Keine Artikel im Bestand gefunden.</p>
+          <div class="text-center py-8 bg-zinc-900/50 border border-zinc-800/80 rounded-2xl text-zinc-500 text-xs">
+            Kein Getränkefund
           </div>
         `;
         return;
@@ -574,136 +533,103 @@
 
       brandNames.forEach(brand => {
         const items = grouped[brand];
-        
-        // Brand Total Liter Calculation
         const brandTotalLiters = items.reduce((sum, i) => sum + (i.stock * i.volume), 0);
         const brandTotalItems = items.reduce((sum, i) => sum + i.stock, 0);
 
         const groupEl = document.createElement('div');
-        groupEl.className = 'bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl';
+        groupEl.className = 'bg-zinc-900 border border-zinc-800/80 rounded-2xl overflow-hidden shadow-lg';
 
-        let rowsHtml = '';
+        let itemsHtml = '';
         items.forEach(item => {
           const itemTotalLiters = (item.stock * item.volume).toFixed(2);
-          rowsHtml += `
-            <tr class="border-b border-slate-800/60 hover:bg-slate-800/40 transition-colors">
-              <td class="px-6 py-4 font-mono text-xs text-sky-400">#${item.num}</td>
-              <td class="px-6 py-4 font-medium text-white">${item.sort}</td>
-              <td class="px-6 py-4 text-slate-400 text-sm">${item.volume.toFixed(2)} L</td>
-              <td class="px-6 py-4">
-                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${item.stock > 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
+          itemsHtml += `
+            <div class="px-3.5 py-2.5 flex items-center justify-between border-b border-zinc-800/40 last:border-0">
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-bold text-white">${item.sort}</span>
+                  <span class="text-[10px] font-mono text-zinc-500">#${item.num}</span>
+                </div>
+                <div class="text-[10px] text-zinc-400">
+                  ${item.volume}L Flasche • <span class="text-zinc-300 font-medium">${itemTotalLiters}L gesamt</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${item.stock > 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
                   ${item.stock} Stk.
                 </span>
-              </td>
-              <td class="px-6 py-4 font-semibold text-slate-200 text-sm">${itemTotalLiters} L</td>
-              <td class="px-6 py-4 text-right">
-                <button onclick="deleteItem('${item.num}')" title="Artikel löschen" class="text-slate-500 hover:text-rose-400 transition-colors p-1">
-                  <i class="fa-solid fa-trash"></i>
+                <button onclick="deleteItem('${item.num}')" class="p-1 text-zinc-600 hover:text-rose-400">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                 </button>
-              </td>
-            </tr>
+              </div>
+            </div>
           `;
         });
 
         groupEl.innerHTML = `
-          <!-- Brand Header -->
-          <div class="bg-slate-950/60 px-6 py-4 border-b border-slate-800 flex flex-wrap justify-between items-center gap-2">
-            <div class="flex items-center gap-3">
-              <i class="fa-solid fa-layer-group text-sky-400"></i>
-              <h3 class="font-bold text-lg text-white">${brand}</h3>
-            </div>
-            <div class="flex items-center gap-4 text-xs font-medium">
-              <span class="bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300">
-                Gesamt: <strong class="text-white">${brandTotalItems} Stk.</strong>
-              </span>
-              <span class="bg-sky-500/10 border border-sky-500/20 px-3 py-1.5 rounded-lg text-sky-300">
-                Volumen: <strong class="text-sky-400">${brandTotalLiters.toFixed(2)} Liter</strong>
-              </span>
+          <div class="bg-zinc-950/80 px-3.5 py-2 border-b border-zinc-800/80 flex justify-between items-center">
+            <span class="font-bold text-xs text-white">${brand}</span>
+            <div class="flex items-center gap-2 text-[10px]">
+              <span class="text-zinc-400">${brandTotalItems} Stk.</span>
+              <span class="text-blue-400 font-bold">${brandTotalLiters.toFixed(2)} L</span>
             </div>
           </div>
-
-          <!-- Items Table -->
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-              <thead>
-                <tr class="border-b border-slate-800 bg-slate-900/50 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                  <th class="px-6 py-3">Art.-Nr.</th>
-                  <th class="px-6 py-3">Sorte</th>
-                  <th class="px-6 py-3">Füllmenge</th>
-                  <th class="px-6 py-3">Bestand</th>
-                  <th class="px-6 py-3">Gesamtliter</th>
-                  <th class="px-6 py-3 text-right">Aktion</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-800/40">
-                ${rowsHtml}
-              </tbody>
-            </table>
+          <div class="divide-y divide-zinc-800/30">
+            ${itemsHtml}
           </div>
         `;
 
         container.appendChild(groupEl);
       });
+
+      lucide.createIcons();
     }
 
-    // Delete Item
     function deleteItem(num) {
-      if (confirm(`Möchtest du den Artikel #${num} (${inventory[num].brand} - ${inventory[num].sort}) wirklich aus dem System entfernen?`)) {
+      if (confirm(`Artikel #${num} löschen?`)) {
         delete inventory[num];
         saveInventory();
-        showToast('Artikel wurde gelöscht', 'info');
+        showToast('Artikel gelöscht');
       }
     }
 
-    // Dashboard Stats Calculation
     function updateStats() {
       let totalItems = 0;
       let totalLiters = 0;
-      const brandsSet = new Set();
 
       Object.values(inventory).forEach(item => {
         totalItems += item.stock;
         totalLiters += item.stock * item.volume;
-        brandsSet.add(item.brand);
       });
 
-      document.getElementById('statTotalItems').innerText = totalItems.toLocaleString();
+      document.getElementById('statTotalItems').innerText = totalItems;
       document.getElementById('statTotalLiters').innerText = totalLiters.toFixed(2);
-      document.getElementById('statTotalBrands').innerText = brandsSet.size;
     }
 
-    // Export Data (JSON / CSV)
     function exportData(format) {
       if (format === 'json') {
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(inventory, null, 2));
-        const downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", `getraenkelager_bestand_${new Date().toISOString().slice(0,10)}.json`);
-        document.body.appendChild(downloadAnchor);
-        downloadAnchor.click();
-        downloadAnchor.remove();
-        showToast('JSON Export erfolgreich', 'success');
+        downloadFile(dataStr, `getraenke_${new Date().toISOString().slice(0,10)}.json`);
+        showToast('JSON exportiert');
       } else if (format === 'csv') {
-        let csvContent = "data:text/csv;charset=utf-8,ArtikelNummer;Marke;Sorte;Fuellmenge_L;Bestand_Stk;Gesamtliter\n";
-        
+        let csv = "ArtikelNummer;Marke;Sorte;Fuellmenge_L;Bestand_Stk;Gesamtliter\n";
         Object.keys(inventory).forEach(num => {
           const i = inventory[num];
-          const row = [num, i.brand, i.sort, i.volume, i.stock, (i.stock * i.volume).toFixed(2)].join(";");
-          csvContent += row + "\n";
+          csv += `${num};${i.brand};${i.sort};${i.volume};${i.stock};${(i.stock * i.volume).toFixed(2)}\n`;
         });
-
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement('a');
-        link.setAttribute('href', encodedUri);
-        link.setAttribute('download', `getraenkelager_bestand_${new Date().toISOString().slice(0,10)}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        showToast('CSV Export erfolgreich', 'success');
+        downloadFile("data:text/csv;charset=utf-8," + encodeURIComponent(csv), `getraenke_${new Date().toISOString().slice(0,10)}.csv`);
+        showToast('CSV exportiert');
       }
     }
 
-    // Import Data (JSON)
+    function downloadFile(uri, filename) {
+      const link = document.createElement('a');
+      link.setAttribute('href', uri);
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    }
+
     function importData(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -711,42 +637,27 @@
       const reader = new FileReader();
       reader.onload = function(e) {
         try {
-          const importedData = JSON.parse(e.target.result);
-          if (typeof importedData === 'object' && importedData !== null) {
-            inventory = importedData;
+          const data = JSON.parse(e.target.result);
+          if (typeof data === 'object') {
+            inventory = data;
             saveInventory();
-            showToast('Bestand erfolgreich importiert', 'success');
-          } else {
-            throw new Error('Ungültiges Format');
+            showToast('Import erfolgreich');
           }
         } catch (err) {
-          alert('Fehler beim Importieren der Datei. Stelle sicher, dass es eine gültige JSON-Sicherungsdatei ist.');
+          alert('Ungültige JSON Datei');
         }
       };
       reader.readAsText(file);
     }
 
-    // Custom Toast Notification System
     function showToast(message, type = 'success') {
       const toast = document.getElementById('toast');
-      const toastMsg = document.getElementById('toastMessage');
-      const toastIcon = document.getElementById('toastIcon');
-
-      toastMsg.innerText = message;
-
-      if (type === 'success') {
-        toastIcon.className = 'fa-solid fa-circle-check text-emerald-400 text-lg';
-      } else if (type === 'warning') {
-        toastIcon.className = 'fa-solid fa-triangle-exclamation text-amber-400 text-lg';
-      } else {
-        toastIcon.className = 'fa-solid fa-circle-info text-sky-400 text-lg';
-      }
-
-      toast.classList.remove('translate-y-20', 'opacity-0');
+      document.getElementById('toastMessage').innerText = message;
       
+      toast.classList.remove('-translate-y-20', 'opacity-0');
       setTimeout(() => {
-        toast.classList.add('translate-y-20', 'opacity-0');
-      }, 3000);
+        toast.classList.add('-translate-y-20', 'opacity-0');
+      }, 2500);
     }
   </script>
 </body>
