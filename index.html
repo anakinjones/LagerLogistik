@@ -1,851 +1,901 @@
 <!DOCTYPE html>
-<html lang="de" class="dark h-full">
+<html lang="de" class="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Getränkelager Mobil</title>
-
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-
-  <!-- Google Font Inter -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-          },
-          colors: {
-            brand: {
-              bg: '#09090b',       // Zinc-950
-              card: '#18181b',     // Zinc-900
-              border: '#27272a',   // Zinc-800
-              accent: '#3b82f6',   // Blue-500
-              amber: '#f59e0b',    // Amber-500
-              emerald: '#10b981',  // Emerald-500
-              rose: '#f43f5e'      // Rose-500
-            }
-          }
-        }
-      }
-    }
-  </script>
-
-  <style>
-    /* iOS Safe Area Padding Helpers für iPhone 13 mini Notch / Home Indicator */
-    .pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
-    .pt-safe { padding-top: max(0.75rem, env(safe-area-inset-top)); }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Getränkelager Verwaltung</title>
     
-    body {
-      background-color: #000000;
-      color: #f4f4f5;
-      font-family: 'Inter', sans-serif;
-      touch-action: manipulation;
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
-    }
-
-    /* Custom Scrollbar Styling */
-    ::-webkit-scrollbar {
-      width: 4px;
-      height: 4px;
-    }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 99px; }
-
-    /* Number Input Spinners ausblenden */
-    input[type=number]::-webkit-inner-spin-button, 
-    input[type=number]::-webkit-outer-spin-button { 
-      -webkit-appearance: none; 
-      margin: 0; 
-    }
-  </style>
-</head>
-<body class="h-full flex justify-center bg-black">
-
-  <script>
-    // =========================================================================
-    // HIER DEINE JSONBIN.IO ZUGANGSDATEN EINTRAGEN:
-    // =========================================================================
-    let CONFIG_BIN_ID = "6ad890beac6210605a4541a5";
-    let CONFIG_MASTER_KEY = "$2a$10$.mIeRoeBg89gaf9lEZn0vuOSzzGr4se/Z98CNP0ANIP2zCRkZzTkG";
-
-    // App Konfiguration & Zustand
-    const APP_CONFIG = { PIN: "070807" };
-    const LOCAL_KEY = "getraenkelager_local_db";
-    const SETTINGS_KEY = "getraenkelager_jsonbin_cfg";
-
-    let inventory = {};
-    let bookingType = 'IN';
-    let pendingBooking = null;
-
-    let jsonBinConfig = {
-      binId: CONFIG_BIN_ID,
-      masterKey: CONFIG_MASTER_KEY
-    };
-
-    window.onload = function() {
-      lucide.createIcons();
-      loadSettings();
-      loadLocalInventory();
-      
-      if (jsonBinConfig.binId && jsonBinConfig.binId !== "DEINE_BIN_ID_HIER_EINFUEGEN" && jsonBinConfig.masterKey) {
-        fetchFromCloud();
-      } else {
-        updateSyncIndicator('offline', 'Lokal');
-        renderQuickSelect();
-        renderInventory();
-        updateStats();
-      }
-    };
-
-    function checkPin() {
-      const pinInput = document.getElementById('pinInput');
-      const pinError = document.getElementById('pinError');
-      
-      if (pinInput.value === APP_CONFIG.PIN) {
-        document.getElementById('pinModal').classList.add('opacity-0', 'pointer-events-none');
-        setTimeout(() => document.getElementById('pinModal').classList.add('hidden'), 300);
-        document.getElementById('app').classList.remove('hidden');
-        document.getElementById('app').classList.add('flex');
-        pinError.classList.add('hidden');
-      } else {
-        pinError.classList.remove('hidden');
-        pinInput.value = '';
-        pinInput.focus();
-      }
-    }
-
-    function lockApp() {
-      document.getElementById('pinModal').classList.remove('hidden', 'opacity-0', 'pointer-events-none');
-      document.getElementById('pinInput').value = '';
-      document.getElementById('app').classList.add('hidden');
-      document.getElementById('app').classList.remove('flex');
-    }
-
-    function loadSettings() {
-      const saved = localStorage.getItem(SETTINGS_KEY);
-      if (saved) {
-        try { 
-          const parsed = JSON.parse(saved); 
-          if (parsed.binId) jsonBinConfig.binId = parsed.binId;
-          if (parsed.masterKey) jsonBinConfig.masterKey = parsed.masterKey;
-        } catch(e){}
-      }
-      document.getElementById('cfgBinId').value = jsonBinConfig.binId || '';
-      document.getElementById('cfgMasterKey').value = jsonBinConfig.masterKey || '';
-    }
-
-    function saveSettings() {
-      jsonBinConfig.binId = document.getElementById('cfgBinId').value.trim();
-      jsonBinConfig.masterKey = document.getElementById('cfgMasterKey').value.trim();
-      
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(jsonBinConfig));
-      closeSettingsModal();
-
-      if (jsonBinConfig.binId && jsonBinConfig.masterKey) {
-        fetchFromCloud();
-      } else {
-        updateSyncIndicator('offline', 'Lokal');
-        showToast('Nur lokale Speicherung aktiv');
-      }
-    }
-
-    function openSettingsModal() {
-      document.getElementById('settingsModal').classList.remove('hidden');
-    }
-
-    function closeSettingsModal() {
-      document.getElementById('settingsModal').classList.add('hidden');
-    }
-
-    function updateSyncIndicator(status, label) {
-      const ind = document.getElementById('syncIndicator');
-      const txt = document.getElementById('syncStatusText');
-
-      txt.innerText = label;
-      if (status === 'online') {
-        ind.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
-      } else if (status === 'syncing') {
-        ind.className = "w-2 h-2 rounded-full bg-blue-500 animate-spin";
-      } else {
-        ind.className = "w-2 h-2 rounded-full bg-amber-500";
-      }
-    }
-
-    function loadLocalInventory() {
-      const data = localStorage.getItem(LOCAL_KEY);
-      if (data) {
-        try { inventory = JSON.parse(data); } catch (e) { inventory = {}; }
-      } else {
-        inventory = {
-          "101": { brand: "Augustiner", sort: "Helles", volume: 0.5, stock: 20 },
-          "102": { brand: "Coca-Cola", sort: "Zero", volume: 0.33, stock: 12 },
-          "201": { brand: "Paulaner", sort: "Spezi", volume: 0.5, stock: 36 }
-        };
-      }
-    }
-
-    async function fetchFromCloud() {
-      if (!jsonBinConfig.binId || !jsonBinConfig.masterKey || jsonBinConfig.binId === "DEINE_BIN_ID_HIER_EINFUEGEN") return;
-
-      updateSyncIndicator('syncing', 'Lade Cloud...');
-      try {
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${jsonBinConfig.binId}/latest`, {
-          method: 'GET',
-          headers: {
-            'X-Master-Key': jsonBinConfig.masterKey
-          }
-        });
-
-        if (!response.ok) throw new Error("Cloud Fehler");
-
-        const result = await response.json();
-        const record = result.record;
-
-        if (record && record.inventory && typeof record.inventory === 'object') {
-          inventory = record.inventory;
-        } else if (record && typeof record === 'object') {
-          inventory = record;
-        } else {
-          inventory = {};
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                    },
+                    colors: {
+                        deepsky: {
+                            400: '#38bdf8',
+                            500: '#00bfff', // Deep Sky Blue standard
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            glow: 'rgba(0, 191, 255, 0.25)'
+                        },
+                        brand: {
+                            bg: '#09090b',       // Zinc-950
+                            card: '#18181b',     // Zinc-900
+                            border: '#27272a',   // Zinc-800
+                            subtle: '#3f3f46'    // Zinc-700
+                        }
+                    }
+                }
+            }
         }
-
-        localStorage.setItem(LOCAL_KEY, JSON.stringify(inventory));
-        updateSyncIndicator('online', 'Live Cloud');
-        showToast('Synchronisiert');
-      } catch (err) {
-        console.error(err);
-        updateSyncIndicator('offline', 'Offline/Lokal');
-        showToast('Cloud-Fehler, nutze lokalen Stand', 'warning');
-      }
-
-      renderQuickSelect();
-      renderInventory();
-      updateStats();
-    }
-
-    async function syncToCloud() {
-      localStorage.setItem(LOCAL_KEY, JSON.stringify(inventory));
-      renderQuickSelect();
-      renderInventory();
-      updateStats();
-
-      if (!jsonBinConfig.binId || !jsonBinConfig.masterKey || jsonBinConfig.binId === "DEINE_BIN_ID_HIER_EINFUEGEN") return;
-
-      updateSyncIndicator('syncing', 'Speichere...');
-      try {
-        const payload = {
-          inventory: inventory,
-          lastUpdated: new Date().toISOString()
-        };
-
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${jsonBinConfig.binId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Master-Key': jsonBinConfig.masterKey
-          },
-          body: JSON.stringify(payload)
-        });
-
-        if (!response.ok) throw new Error("Upload Fehlgeschlagen");
-
-        updateSyncIndicator('online', 'Live Cloud');
-      } catch (err) {
-        console.error(err);
-        updateSyncIndicator('offline', 'Lokal gespeichert');
-      }
-    }
-
-    function switchTab(tab) {
-      const bookingTab = document.getElementById('tabBooking');
-      const inventoryTab = document.getElementById('tabInventory');
-      const tabBtnBooking = document.getElementById('tabBtnBooking');
-      const tabBtnInventory = document.getElementById('tabBtnInventory');
-
-      if (tab === 'booking') {
-        bookingTab.classList.remove('hidden');
-        inventoryTab.classList.add('hidden');
-        tabBtnBooking.className = "flex flex-col items-center gap-1 text-blue-400";
-        tabBtnInventory.className = "flex flex-col items-center gap-1 text-zinc-500";
-      } else {
-        bookingTab.classList.add('hidden');
-        inventoryTab.classList.remove('hidden');
-        tabBtnInventory.className = "flex flex-col items-center gap-1 text-blue-400";
-        tabBtnBooking.className = "flex flex-col items-center gap-1 text-zinc-500";
-        renderInventory();
-      }
-    }
-
-    function onItemNumberChange() {
-      const num = document.getElementById('bookingItemNum').value.trim();
-      const badge = document.getElementById('existingItemBadge');
-      const infoBox = document.getElementById('itemInfoBox');
-
-      if (num && inventory[num]) {
-        badge.classList.remove('hidden');
-        infoBox.classList.remove('hidden');
-        document.getElementById('infoBrandSort').innerText = `${inventory[num].brand} - ${inventory[num].sort}`;
-        document.getElementById('infoVolume').innerText = inventory[num].volume;
-        document.getElementById('infoStock').innerText = inventory[num].stock;
-      } else {
-        badge.classList.add('hidden');
-        infoBox.classList.add('hidden');
-      }
-    }
-
-    function selectQuickItem(itemNum) {
-      document.getElementById('bookingItemNum').value = itemNum;
-      onItemNumberChange();
-      document.getElementById('bookingAmount').focus();
-    }
-
-    function renderQuickSelect() {
-      const container = document.getElementById('quickSelectContainer');
-      const countEl = document.getElementById('quickSelectCount');
-      container.innerHTML = '';
-
-      const keys = Object.keys(inventory);
-      countEl.innerText = `${keys.length} Artikel`;
-
-      if (keys.length === 0) {
-        container.innerHTML = `<span class="text-[11px] text-zinc-600">Keine Artikel erfasst</span>`;
-        return;
-      }
-
-      keys.forEach(num => {
-        const item = inventory[num];
-        const brandCode = item.brand.substring(0, 3).toUpperCase();
-        const label = `${brandCode} - ${item.sort}`;
-
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.onclick = () => selectQuickItem(num);
-        btn.className = `shrink-0 h-8 px-3 rounded-xl text-[11px] font-semibold flex items-center gap-1.5 border transition-all ${
-          item.stock > 0 
-            ? 'bg-zinc-900 border-zinc-800 text-zinc-200 active:bg-zinc-800' 
-            : 'bg-zinc-900/40 border-zinc-900 text-zinc-600'
-        }`;
-        btn.innerHTML = `
-          <span>${label}</span>
-          <span class="text-[9px] px-1.5 py-0.2 rounded-full ${item.stock > 0 ? 'bg-blue-500/20 text-blue-400' : 'bg-zinc-800 text-zinc-600'}">${item.stock}</span>
-        `;
-        container.appendChild(btn);
-      });
-    }
-
-    function handleBooking(e) {
-      e.preventDefault();
-      const num = document.getElementById('bookingItemNum').value.trim();
-      const amount = parseInt(document.getElementById('bookingAmount').value, 10);
-
-      if (!num || isNaN(amount) || amount <= 0) return;
-
-      if (inventory[num]) {
-        executeStockBooking(num, amount, bookingType);
-      } else {
-        pendingBooking = { num, amount, type: bookingType };
-        document.getElementById('modalItemNum').innerText = num;
-        document.getElementById('newItemModal').classList.remove('hidden');
-        document.getElementById('newBrand').focus();
-      }
-    }
-
-    function executeStockBooking(num, amount, type) {
-      const item = inventory[num];
-      if (type === 'IN') {
-        item.stock += amount;
-        showToast(`+${amount} Stk. ${item.brand} gebucht`);
-      } else {
-        if (item.stock < amount) {
-          showToast(`Bestand unterschritten!`, 'warning');
+    </script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        /* Touch Optimierung & Safe Area für iPhone 13 mini */
+        body {
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            background-color: #09090b;
         }
-        item.stock = Math.max(0, item.stock - amount);
-        showToast(`-${amount} Stk. ${item.brand} entnommen`);
-      }
-
-      syncToCloud();
-      document.getElementById('bookingForm').reset();
-      onItemNumberChange();
-    }
-
-    function saveNewItemAndBook(e) {
-      e.preventDefault();
-      if (!pendingBooking) return;
-
-      const brand = document.getElementById('newBrand').value.trim();
-      const sort = document.getElementById('newSort').value.trim();
-      const volume = parseFloat(document.getElementById('newVolume').value);
-
-      if (!brand || !sort || isNaN(volume)) return;
-
-      inventory[pendingBooking.num] = { brand, sort, volume, stock: 0 };
-      closeNewItemModal();
-      executeStockBooking(pendingBooking.num, pendingBooking.amount, pendingBooking.type);
-      pendingBooking = null;
-    }
-
-    function closeNewItemModal() {
-      document.getElementById('newItemModal').classList.add('hidden');
-      document.getElementById('newItemForm').reset();
-    }
-
-    function renderInventory() {
-      const container = document.getElementById('inventoryContainer');
-      const searchQuery = document.getElementById('searchInput')?.value.toLowerCase() || '';
-      container.innerHTML = '';
-
-      const grouped = {};
-      Object.keys(inventory).forEach(num => {
-        const item = inventory[num];
-        const match = item.brand.toLowerCase().includes(searchQuery) || 
-                      item.sort.toLowerCase().includes(searchQuery) || 
-                      num.toLowerCase().includes(searchQuery);
-
-        if (match) {
-          if (!grouped[item.brand]) grouped[item.brand] = [];
-          grouped[item.brand].push({ num, ...item });
-        }
-      });
-
-      const brandNames = Object.keys(grouped).sort();
-
-      if (brandNames.length === 0) {
-        container.innerHTML = `
-          <div class="text-center py-8 bg-zinc-900/50 border border-zinc-800/80 rounded-2xl text-zinc-500 text-xs">
-            Kein Getränkefund
-          </div>
-        `;
-        return;
-      }
-
-      brandNames.forEach(brand => {
-        const items = grouped[brand];
-        const brandTotalLiters = items.reduce((sum, i) => sum + (i.stock * i.volume), 0);
-        const brandTotalItems = items.reduce((sum, i) => sum + i.stock, 0);
-
-        const groupEl = document.createElement('div');
-        groupEl.className = 'bg-zinc-900 border border-zinc-800/80 rounded-2xl overflow-hidden shadow-lg';
-
-        let itemsHtml = '';
-        items.forEach(item => {
-          const itemTotalLiters = (item.stock * item.volume).toFixed(2);
-          itemsHtml += `
-            <div class="px-3.5 py-2.5 flex items-center justify-between border-b border-zinc-800/40 last:border-0">
-              <div>
-                <div class="flex items-center gap-1.5">
-                  <span class="text-xs font-bold text-white">${item.sort}</span>
-                  <span class="text-[10px] font-mono text-zinc-500">#${item.num}</span>
-                </div>
-                <div class="text-[10px] text-zinc-400">
-                  ${item.volume}L Flasche • <span class="text-zinc-300 font-medium">${itemTotalLiters}L gesamt</span>
-                </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${item.stock > 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
-                  ${item.stock} Stk.
-                </span>
-                <button onclick="deleteItem('${item.num}')" class="p-1 text-zinc-600 hover:text-rose-400">
-                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                </button>
-              </div>
-            </div>
-          `;
-        });
-
-        groupEl.innerHTML = `
-          <div class="bg-zinc-950/80 px-3.5 py-2 border-b border-zinc-800/80 flex justify-between items-center">
-            <span class="font-bold text-xs text-white">${brand}</span>
-            <div class="flex items-center gap-2 text-[10px]">
-              <span class="text-zinc-400">${brandTotalItems} Stk.</span>
-              <span class="text-blue-400 font-bold">${brandTotalLiters.toFixed(2)} L</span>
-            </div>
-          </div>
-          <div class="divide-y divide-zinc-800/30">
-            ${itemsHtml}
-          </div>
-        `;
-
-        container.appendChild(groupEl);
-      });
-
-      lucide.createIcons();
-    }
-
-    function deleteItem(num) {
-      if (confirm(`Artikel #${num} löschen?`)) {
-        delete inventory[num];
-        syncToCloud();
-        showToast('Artikel gelöscht');
-      }
-    }
-
-    function updateStats() {
-      let totalItems = 0;
-      let totalLiters = 0;
-
-      Object.values(inventory).forEach(item => {
-        totalItems += item.stock;
-        totalLiters += item.stock * item.volume;
-      });
-
-      document.getElementById('statTotalItems').innerText = totalItems;
-      document.getElementById('statTotalLiters').innerText = totalLiters.toFixed(2);
-    }
-
-    function exportData(format) {
-      if (format === 'json') {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(inventory, null, 2));
-        downloadFile(dataStr, `getraenke_${new Date().toISOString().slice(0,10)}.json`);
-        showToast('JSON exportiert');
-      } else if (format === 'csv') {
-        let csv = "ArtikelNummer;Marke;Sorte;Fuellmenge_L;Bestand_Stk;Gesamtliter\n";
-        Object.keys(inventory).forEach(num => {
-          const i = inventory[num];
-          csv += `${num};${i.brand};${i.sort};${i.volume};${i.stock};${(i.stock * i.volume).toFixed(2)}\n`;
-        });
-        downloadFile("data:text/csv;charset=utf-8," + encodeURIComponent(csv), `getraenke_${new Date().toISOString().slice(0,10)}.csv`);
-        showToast('CSV exportiert');
-      }
-    }
-
-    function downloadFile(uri, filename) {
-      const link = document.createElement('a');
-      link.setAttribute('href', uri);
-      link.setAttribute('download', filename);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    }
-
-    function importData(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const data = JSON.parse(e.target.result);
-          const rawObj = data.inventory || data;
-          if (typeof rawObj === 'object') {
-            inventory = rawObj;
-            syncToCloud();
-            showToast('Import erfolgreich');
-          }
-        } catch (err) {
-          alert('Ungültige JSON Datei');
-        }
-      };
-      reader.readAsText(file);
-    }
-
-    function showToast(message, type = 'success') {
-      const toast = document.getElementById('toast');
-      document.getElementById('toastMessage').innerText = message;
-      
-      toast.classList.remove('-translate-y-20', 'opacity-0');
-      setTimeout(() => {
-        toast.classList.add('-translate-y-20', 'opacity-0');
-      }, 2500);
-    }
-  </script>
-
-  <!-- Container optimiert auf max 375px Breite (iPhone 13 mini) -->
-  <div class="w-full max-w-[375px] min-h-full bg-zinc-950 flex flex-col relative border-x border-zinc-900/50 shadow-2xl overflow-x-hidden">
-
-    <!-- PIN Screen Overlay -->
-    <div id="pinModal" class="absolute inset-0 z-50 flex flex-col justify-between bg-zinc-950/95 backdrop-blur-xl p-6 pt-safe pb-safe transition-opacity duration-300">
-      <div class="flex-1 flex flex-col justify-center items-center text-center space-y-6">
-        <div class="w-16 h-16 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-2xl flex items-center justify-center shadow-inner">
-          <i data-lucide="lock" class="w-8 h-8"></i>
-        </div>
         
-        <div>
-          <h2 class="text-2xl font-bold text-white tracking-tight">Getränkelager</h2>
-          <p class="text-xs text-zinc-400 mt-1">Geben Sie Ihre PIN ein</p>
-        </div>
+        .safe-pb {
+            padding-bottom: env(safe-area-inset-bottom, 16px);
+        }
+        .safe-pt {
+            padding-top: env(safe-area-inset-top, 12px);
+        }
 
-        <div class="w-full space-y-3 max-w-[280px]">
-          <input type="password" id="pinInput" placeholder="••••" maxlength="8" pattern="[0-9]*" inputmode="numeric" 
-            class="w-full text-center text-3xl font-mono tracking-widest bg-zinc-900 border border-zinc-800 focus:border-blue-500 rounded-2xl h-14 text-white outline-none transition-all shadow-inner">
-          
-          <p id="pinError" class="text-rose-500 text-xs hidden flex items-center justify-center gap-1 font-medium">
-            <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> PIN ungültig
-          </p>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #18181b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3f3f46;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00bfff;
+        }
 
-          <button onclick="checkPin()" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-semibold h-12 rounded-2xl shadow-lg shadow-blue-600/20 transition-all flex items-center justify-center gap-2">
-            <span>Entsperren</span>
-            <i data-lucide="arrow-right" class="w-4 h-4"></i>
-          </button>
-        </div>
-      </div>
+        /* Pin Input Animations */
+        .pin-dot {
+            transition: all 0.2s ease-in-out;
+        }
+        .pin-dot.filled {
+            background-color: #00bfff;
+            box-shadow: 0 0 10px rgba(0, 191, 255, 0.6);
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body class="text-zinc-100 min-h-screen flex justify-center items-start sm:items-center bg-black font-sans antialiased selection:bg-deepsky-500 selection:text-black">
 
-
-    </div>
-
-    <!-- MAIN APP SCREEN -->
-    <div id="app" class="hidden flex-col flex-1 h-full">
-
-      <!-- Header -->
-      <header class="bg-zinc-900/80 backdrop-blur-md border-b border-zinc-800/80 sticky top-0 z-30 pt-safe px-4 pb-3">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            <div class="p-2 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-400">
-              <i data-lucide="wine" class="w-5 h-5"></i>
+    <!-- Haupt-Container simuliert iPhone 13 mini Display (Max 375px) -->
+    <div class="w-full max-w-[375px] min-h-screen sm:min-h-[812px] sm:max-h-[812px] bg-brand-bg sm:border sm:border-brand-border sm:rounded-[40px] flex flex-col justify-between overflow-hidden relative shadow-2xl">
+        
+        <!-- ============================================================== -->
+        <!-- PIN LOCK SCREEN -->
+        <!-- ============================================================== -->
+        <div id="pinScreen" class="absolute inset-0 z-50 bg-brand-bg/98 backdrop-blur-xl flex flex-col justify-between p-6 safe-pt safe-pb">
+            <div class="text-center mt-8">
+                <div class="inline-flex p-4 rounded-full bg-deepsky-500/10 text-deepsky-500 mb-4 border border-deepsky-500/20 shadow-[0_0_15px_rgba(0,191,255,0.2)]">
+                    <i data-lucide="lock" class="w-8 h-8"></i>
+                </div>
+                <h1 class="text-xl font-bold text-white tracking-wide">Getränkelager</h1>
+                <p class="text-xs text-zinc-400 mt-1">Sicherheitscode eingeben</p>
             </div>
-            <div>
-              <h1 class="font-bold text-sm text-white leading-tight">LagerLogistik</h1>
-              <div class="flex items-center gap-1.5 mt-0.5">
-                <span id="syncIndicator" class="w-2 h-2 rounded-full bg-amber-500"></span>
-                <span id="syncStatusText" class="text-[10px] text-zinc-400 font-medium">Lokal</span>
-              </div>
+
+            <!-- PIN Punkte Anzeige -->
+            <div id="pin-dots" class="flex gap-3 mb-8">
+              <div class="pin-dot w-4 h-4 rounded-full border-2 border-slate-600 bg-transparent transition-all duration-200"></div>
+              <div class="pin-dot w-4 h-4 rounded-full border-2 border-slate-600 bg-transparent transition-all duration-200"></div>
+              <div class="pin-dot w-4 h-4 rounded-full border-2 border-slate-600 bg-transparent transition-all duration-200"></div>
+              <div class="pin-dot w-4 h-4 rounded-full border-2 border-slate-600 bg-transparent transition-all duration-200"></div>
+              <div class="pin-dot w-4 h-4 rounded-full border-2 border-slate-600 bg-transparent transition-all duration-200"></div>
+              <div class="pin-dot w-4 h-4 rounded-full border-2 border-slate-600 bg-transparent transition-all duration-200"></div>
             </div>
-          </div>
 
-          <div class="flex items-center gap-1">
-            <button onclick="openSettingsModal()" class="p-2 text-zinc-400 active:text-blue-400 active:bg-zinc-800 rounded-xl transition-all">
-              <i data-lucide="settings" class="w-5 h-5"></i>
-            </button>
-            <button onclick="lockApp()" class="p-2 text-zinc-400 active:text-amber-400 active:bg-zinc-800 rounded-xl transition-all">
-              <i data-lucide="lock" class="w-5 h-5"></i>
-            </button>
-          </div>
-        </div>
-      </header>
+            <div id="pinError" class="text-rose-500 text-xs text-center min-h-[16px] font-medium transition-opacity opacity-0">
+                Falsche PIN. Bitte erneut versuchen.
+            </div>
 
-      <!-- Scrollable Main Content -->
-      <main class="flex-1 overflow-y-auto p-4 space-y-5 pb-24">
-
-        <!-- TAB 1: BUCHEN -->
-        <section id="tabBooking" class="space-y-4">
-          
-          <!-- Schnellwahl List -->
-          <div>
-            <div class="flex items-center justify-between mb-2 px-1">
-              <span class="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Schnellwahl</span>
-              <span class="text-[10px] text-zinc-500" id="quickSelectCount">0 Artikel</span>
+            <!-- Ziffernblock -->
+            <div class="grid grid-cols-3 gap-3 my-auto max-w-[280px] mx-auto">
+                <button onclick="pressPin('1')" class="h-16 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-deepsky-500/50 active:bg-deepsky-500/20 active:text-deepsky-500 transition-all flex items-center justify-center">1</button>
+                <button onclick="pressPin('2')" class="h-16 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-deepsky-500/50 active:bg-deepsky-500/20 active:text-deepsky-500 transition-all flex items-center justify-center">2</button>
+                <button onclick="pressPin('3')" class="h-16 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-deepsky-500/50 active:bg-deepsky-500/20 active:text-deepsky-500 transition-all flex items-center justify-center">3</button>
+                <button onclick="pressPin('4')" class="h-16 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-deepsky-500/50 active:bg-deepsky-500/20 active:text-deepsky-500 transition-all flex items-center justify-center">4</button>
+                <button onclick="pressPin('5')" class="h-16 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-deepsky-500/50 active:bg-deepsky-500/20 active:text-deepsky-500 transition-all flex items-center justify-center">5</button>
+                <button onclick="pressPin('6')" class="h-16 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-deepsky-500/50 active:bg-deepsky-500/20 active:text-deepsky-500 transition-all flex items-center justify-center">6</button>
+                <button onclick="pressPin('7')" class="h-16 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-deepsky-500/50 active:bg-deepsky-500/20 active:text-deepsky-500 transition-all flex items-center justify-center">7</button>
+                <button onclick="pressPin('8')" class="h-16 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-deepsky-500/50 active:bg-deepsky-500/20 active:text-deepsky-500 transition-all flex items-center justify-center">8</button>
+                <button onclick="pressPin('9')" class="h-16 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-deepsky-500/50 active:bg-deepsky-500/20 active:text-deepsky-500 transition-all flex items-center justify-center">9</button>
+                <button onclick="clearPin()" class="h-16 rounded-2xl bg-brand-card border border-brand-border text-xs text-zinc-400 font-medium hover:text-white active:bg-zinc-800 transition-all flex items-center justify-center">Löschen</button>
+                <button onclick="pressPin('0')" class="h-16 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-deepsky-500/50 active:bg-deepsky-500/20 active:text-deepsky-500 transition-all flex items-center justify-center">0</button>
+                <button onclick="deletePinDigit()" class="h-16 rounded-2xl bg-brand-card border border-brand-border text-zinc-400 hover:text-white active:bg-zinc-800 transition-all flex items-center justify-center">
+                    <i data-lucide="delete" class="w-6 h-6"></i>
+                </button>
             </div>
             
-            <div id="quickSelectContainer" class="flex gap-2 overflow-x-auto pb-2 scrollbar-none -mx-4 px-4">
-              <!-- Rendered Quick Select Badges -->
+            <div class="text-center text-[10px] text-zinc-600 mt-2">
+                Getränkelager v2.0 • Safe Mobile App
             </div>
-          </div>
+        </div>
 
-          <!-- Booking Form Card -->
-          <div class="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-4 space-y-4 shadow-xl">
-            <div class="flex items-center gap-2 pb-2 border-b border-zinc-800">
-              <i data-lucide="arrow-left-right" class="w-4 h-4 text-blue-400"></i>
-              <h2 class="text-sm font-bold text-white">Getränk buchen</h2>
-            </div>
-
-            <form id="bookingForm" onsubmit="handleBooking(event)" class="space-y-3">
-              <div>
-                <label class="block text-[11px] font-medium text-zinc-400 mb-1">Artikel-Nummer</label>
-                <div class="relative">
-                  <input type="text" id="bookingItemNum" pattern="[0-9]*" inputmode="numeric" required placeholder="z.B. 101" oninput="onItemNumberChange()" 
-                    class="w-full bg-zinc-950 border border-zinc-800 focus:border-blue-500 rounded-xl h-11 px-3 text-sm text-white outline-none font-mono">
-                  <span id="existingItemBadge" class="hidden absolute right-2.5 top-2.5 text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-medium">
-                    Bekannt
-                  </span>
+        <!-- ============================================================== -->
+        <!-- HEADER -->
+        <!-- ============================================================== -->
+        <header class="px-5 pt-5 pb-3 border-b border-brand-border bg-brand-card/50 backdrop-blur-md flex items-center justify-between safe-pt sticky top-0 z-20">
+            <div class="flex items-center space-x-2.5">
+                <div class="p-2 rounded-xl bg-deepsky-500/10 border border-deepsky-500/30 text-deepsky-500">
+                    <i data-lucide="wine" class="w-5 h-5"></i>
                 </div>
-              </div>
-
-              <div>
-                <label class="block text-[11px] font-medium text-zinc-400 mb-1">Anzahl (Stück)</label>
-                <input type="number" id="bookingAmount" min="1" required placeholder="1" 
-                  class="w-full bg-zinc-950 border border-zinc-800 focus:border-blue-500 rounded-xl h-11 px-3 text-sm text-white outline-none font-mono">
-              </div>
-
-              <!-- Article Preview Box -->
-              <div id="itemInfoBox" class="hidden p-3 rounded-xl bg-zinc-950 border border-zinc-800/80 space-y-1">
-                <div class="text-[10px] text-zinc-500 font-medium">Erkannter Artikel</div>
-                <div class="text-xs font-bold text-white" id="infoBrandSort">-</div>
-                <div class="text-[11px] text-zinc-400 flex justify-between pt-1">
-                  <span>Füllmenge: <strong id="infoVolume" class="text-zinc-200"></strong>L</span>
-                  <span>Bestand: <strong id="infoStock" class="text-blue-400"></strong> Stk.</span>
+                <div>
+                    <h1 class="font-bold text-sm text-white tracking-wide leading-tight">Getränkelager</h1>
+                    <span id="syncStatus" class="text-[10px] text-zinc-400 flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Bereit
+                    </span>
                 </div>
-              </div>
-
-              <!-- In/Out Buttons -->
-              <div class="grid grid-cols-2 gap-2.5 pt-2">
-                <button type="submit" onclick="bookingType='IN'" class="h-12 bg-emerald-600 active:bg-emerald-500 active:scale-95 text-white font-semibold rounded-xl text-xs shadow-lg shadow-emerald-900/20 transition-all flex items-center justify-center gap-1.5">
-                  <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                  <span>Eingang (+)</span>
+            </div>
+            <div class="flex items-center space-x-1.5">
+                <button onclick="syncData()" title="Synchronisieren" class="p-2.5 rounded-xl bg-brand-card border border-brand-border text-zinc-300 hover:text-deepsky-500 hover:border-deepsky-500/40 active:scale-95 transition-all">
+                    <i data-lucide="refresh-cw" id="syncIcon" class="w-4 h-4"></i>
                 </button>
-                <button type="submit" onclick="bookingType='OUT'" class="h-12 bg-rose-600 active:bg-rose-500 active:scale-95 text-white font-semibold rounded-xl text-xs shadow-lg shadow-rose-900/20 transition-all flex items-center justify-center gap-1.5">
-                  <i data-lucide="minus-circle" class="w-4 h-4"></i>
-                  <span>Ausgang (-)</span>
+                <button onclick="openSettings()" title="Einstellungen" class="p-2.5 rounded-xl bg-brand-card border border-brand-border text-zinc-300 hover:text-deepsky-500 hover:border-deepsky-500/40 active:scale-95 transition-all">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
                 </button>
-              </div>
-            </form>
-          </div>
-
-          <!-- Quick Stats Banner -->
-          <div class="grid grid-cols-2 gap-2.5">
-            <div class="bg-zinc-900 border border-zinc-800/80 p-3 rounded-2xl">
-              <span class="text-[10px] text-zinc-500 font-medium block">Gesamtbestand</span>
-              <span id="statTotalItems" class="text-lg font-bold text-white font-mono">0</span>
-              <span class="text-[10px] text-zinc-500"> Flaschen</span>
             </div>
-            <div class="bg-zinc-900 border border-zinc-800/80 p-3 rounded-2xl">
-              <span class="text-[10px] text-zinc-500 font-medium block">Gesamtvolumen</span>
-              <span id="statTotalLiters" class="text-lg font-bold text-blue-400 font-mono">0.00</span>
-              <span class="text-[10px] text-zinc-500"> Liter</span>
+        </header>
+
+        <!-- ============================================================== -->
+        <!-- MAIN CONTENT AREA -->
+        <!-- ============================================================== -->
+        <main class="flex-1 overflow-y-auto p-4 space-y-4">
+            
+            <!-- TAB 1: BUCHEN -->
+            <section id="tab-buchen" class="space-y-4">
+                
+                <!-- Schnellauswahl Karussell / Grid -->
+                <div class="bg-brand-card border border-brand-border rounded-2xl p-3.5 shadow-lg">
+                    <div class="flex justify-between items-center mb-2.5">
+                        <span class="text-xs font-semibold text-deepsky-400 flex items-center gap-1.5 tracking-wide">
+                            <i data-lucide="zap" class="w-3.5 h-3.5"></i> Schnellauswahl (A-Z Marken)
+                        </span>
+                        <span class="text-[10px] text-zinc-400" id="quickSelectCount">0 Artikel</span>
+                    </div>
+
+                    <!-- Alphabtisch sortierte Schnellauswahl-Buttons -->
+                    <div id="quickSelectContainer" class="flex gap-2 overflow-x-auto pb-1 pt-1 -mx-1 px-1 no-scrollbar">
+                        <!-- Dynamisch befüllt via JS -->
+                        <div class="text-xs text-zinc-400 py-2">Keine Artikel erfasst</div>
+                    </div>
+                </div>
+
+                <!-- Buchungs-Formular -->
+                <div class="bg-brand-card border border-brand-border rounded-2xl p-4 shadow-lg space-y-3.5">
+                    <div class="flex justify-between items-center pb-2 border-b border-brand-border">
+                        <h2 class="text-sm font-semibold text-zinc-200">Warenbuchung</h2>
+                        <span id="articleStatusBadge" class="hidden px-2 py-0.5 text-[10px] rounded-full font-medium"></span>
+                    </div>
+
+                    <!-- Art-Wahl (Eingang / Ausgang) -->
+                    <div class="grid grid-cols-2 gap-2 p-1 bg-brand-bg rounded-xl border border-brand-border">
+                        <button type="button" id="typeInBtn" onclick="setBookingType('IN')" class="py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all bg-deepsky-500 text-black shadow-md">
+                            <i data-lucide="arrow-down-left" class="w-4 h-4"></i> Eingang (+)
+                        </button>
+                        <button type="button" id="typeOutBtn" onclick="setBookingType('OUT')" class="py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all text-zinc-400 hover:text-white">
+                            <i data-lucide="arrow-up-right" class="w-4 h-4"></i> Ausgang (-)
+                        </button>
+                    </div>
+
+                    <!-- Artikelnummer / ID -->
+                    <div>
+                        <label class="block text-[11px] font-medium text-zinc-400 mb-1">Artikel-ID / Barcode</label>
+                        <div class="relative">
+                            <input type="text" id="inputArtNr" oninput="onArtNrChange()" placeholder="z.B. 101 oder EAN" class="w-full bg-brand-bg border border-brand-border rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-deepsky-500 focus:ring-1 focus:ring-deepsky-500 transition-all pl-9">
+                            <i data-lucide="barcode" class="w-4 h-4 absolute left-3 top-3 text-zinc-500"></i>
+                        </div>
+                    </div>
+
+                    <!-- Zusatzfelder bei NEUEM Artikel -->
+                    <div id="newArticleFields" class="space-y-3 pt-1 hidden transition-all border-t border-dashed border-brand-border">
+                        <div class="bg-deepsky-500/10 border border-deepsky-500/20 rounded-xl p-2.5 text-xs text-deepsky-400 flex items-center gap-2">
+                            <i data-lucide="info" class="w-4 h-4 shrink-0"></i>
+                            <span>Neuer Artikel! Bitte Stammdaten ergänzen.</span>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-medium text-zinc-400 mb-1">Marke *</label>
+                            <input type="text" id="inputMarke" placeholder="z.B. Coca-Cola, Paulaner" class="w-full bg-brand-bg border border-brand-border rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-deepsky-500 transition-all">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[11px] font-medium text-zinc-400 mb-1">Sorte *</label>
+                                <input type="text" id="inputSorte" placeholder="z.B. Zero, Spezi" class="w-full bg-brand-bg border border-brand-border rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-deepsky-500 transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-zinc-400 mb-1">Liter pro Fl. *</label>
+                                <input type="number" step="0.01" id="inputLiter" placeholder="z.B. 0.5 oder 0.33" class="w-full bg-brand-bg border border-brand-border rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-deepsky-500 transition-all">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Menge -->
+                    <div>
+                        <label class="block text-[11px] font-medium text-zinc-400 mb-1">Anzahl (Flaschen / Kästen)</label>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="adjustAmount(-1)" class="w-11 h-11 bg-brand-bg border border-brand-border rounded-xl flex items-center justify-center text-zinc-300 active:bg-zinc-800 text-lg font-bold">-</button>
+                            <input type="number" id="inputMenge" value="1" min="1" class="flex-1 bg-brand-bg border border-brand-border rounded-xl py-2.5 text-center text-base font-bold text-white focus:outline-none focus:border-deepsky-500">
+                            <button type="button" onclick="adjustAmount(1)" class="w-11 h-11 bg-brand-bg border border-brand-border rounded-xl flex items-center justify-center text-zinc-300 active:bg-zinc-800 text-lg font-bold">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Absenden Button -->
+                    <button type="button" onclick="executeBooking()" class="w-full py-3 mt-2 rounded-xl bg-deepsky-500 hover:bg-deepsky-600 active:bg-deepsky-700 text-black font-bold text-sm tracking-wide shadow-[0_0_20px_rgba(0,191,255,0.3)] transition-all flex items-center justify-center gap-2">
+                        <i data-lucide="check-circle" class="w-5 h-5"></i> Buchung Durchführen
+                    </button>
+                </div>
+            </section>
+
+            <!-- TAB 2: BESTAND -->
+            <section id="tab-bestand" class="space-y-3 hidden">
+                <!-- Suchleiste & Zusammenfassung -->
+                <div class="flex gap-2">
+                    <div class="relative flex-1">
+                        <input type="text" id="searchStock" oninput="renderStock()" placeholder="Bestand durchsuchen..." class="w-full bg-brand-card border border-brand-border rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-deepsky-500 pl-8">
+                        <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-3 text-zinc-500"></i>
+                    </div>
+                </div>
+
+                <!-- Gesamt-Statistik Mini Banner -->
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="bg-brand-card border border-brand-border rounded-xl p-2.5 text-center">
+                        <span class="text-[10px] text-zinc-400 block">Gesamt Flaschen</span>
+                        <span id="statTotalItems" class="text-sm font-bold text-deepsky-400">0 Stk.</span>
+                    </div>
+                    <div class="bg-brand-card border border-brand-border rounded-xl p-2.5 text-center">
+                        <span class="text-[10px] text-zinc-400 block">Gesamt Volume</span>
+                        <span id="statTotalLiters" class="text-sm font-bold text-deepsky-400">0.00 L</span>
+                    </div>
+                </div>
+
+                <!-- Bestandsliste (Alphabetisch nach Marke sortiert) -->
+                <div class="space-y-2" id="stockListContainer">
+                    <!-- Dynamisch erzeugt -->
+                </div>
+            </section>
+
+        </main>
+
+        <!-- ============================================================== -->
+        <!-- NAVIGATION BAR (BOTTOM) -->
+        <!-- ============================================================== -->
+        <nav class="bg-brand-card/90 backdrop-blur-md border-t border-brand-border p-2 safe-pb grid grid-cols-2 gap-2 sticky bottom-0 z-20">
+            <button id="navBtnBuchen" onclick="switchTab('buchen')" class="py-2.5 rounded-xl flex flex-col items-center justify-center transition-all bg-deepsky-500/10 text-deepsky-500 border border-deepsky-500/30">
+                <i data-lucide="plus-circle" class="w-5 h-5 mb-0.5"></i>
+                <span class="text-[11px] font-semibold">Buchen</span>
+            </button>
+            <button id="navBtnBestand" onclick="switchTab('bestand')" class="py-2.5 rounded-xl flex flex-col items-center justify-center transition-all text-zinc-400 hover:text-zinc-200 border border-transparent">
+                <i data-lucide="boxes" class="w-5 h-5 mb-0.5"></i>
+                <span class="text-[11px] font-semibold">Bestand</span>
+            </button>
+        </nav>
+
+        <!-- ============================================================== -->
+        <!-- SETTINGS MODAL -->
+        <!-- ============================================================== -->
+        <div id="settingsModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+            <div class="bg-brand-card border border-brand-border rounded-2xl w-full max-w-[340px] p-4 space-y-4 max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center border-b border-brand-border pb-2">
+                    <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                        <i data-lucide="sliders" class="w-4 h-4 text-deepsky-500"></i> Einstellungen
+                    </h3>
+                    <button onclick="closeSettings()" class="text-zinc-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+
+                <!-- JSONBin.io Config -->
+                <div class="space-y-2.5">
+                    <h4 class="text-xs font-semibold text-deepsky-400 uppercase tracking-wider">JSONBin.io Sync</h4>
+                    <div>
+                        <label class="block text-[10px] text-zinc-400 mb-1">Bin ID</label>
+                        <input type="text" id="cfgBinId" class="w-full bg-brand-bg border border-brand-border rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-deepsky-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-zinc-400 mb-1">Master Key</label>
+                        <input type="password" id="cfgMasterKey" class="w-full bg-brand-bg border border-brand-border rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-deepsky-500">
+                    </div>
+                </div>
+
+                <!-- PIN Ändern -->
+                <div class="space-y-2 border-t border-brand-border pt-3">
+                    <h4 class="text-xs font-semibold text-deepsky-400 uppercase tracking-wider">Sicherheit</h4>
+                    <div>
+                        <label class="block text-[10px] text-zinc-400 mb-1">App PIN (4 Stellen)</label>
+                        <input type="text" id="cfgPin" maxlength="4" class="w-full bg-brand-bg border border-brand-border rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-deepsky-500">
+                    </div>
+                </div>
+
+                <!-- Data Backup / Restore -->
+                <div class="space-y-2 border-t border-brand-border pt-3">
+                    <h4 class="text-xs font-semibold text-deepsky-400 uppercase tracking-wider">Datensicherung</h4>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="exportJSON()" class="py-2 bg-brand-bg border border-brand-border rounded-lg text-xs font-medium hover:border-deepsky-500 text-zinc-200 flex items-center justify-center gap-1">
+                            <i data-lucide="download" class="w-3.5 h-3.5"></i> Export
+                        </button>
+                        <button onclick="triggerImport()" class="py-2 bg-brand-bg border border-brand-border rounded-lg text-xs font-medium hover:border-deepsky-500 text-zinc-200 flex items-center justify-center gap-1">
+                            <i data-lucide="upload" class="w-3.5 h-3.5"></i> Import
+                        </button>
+                        <input type="file" id="importFileInput" onchange="importJSON(event)" accept=".json" class="hidden">
+                    </div>
+                </div>
+
+                <!-- Save Buttons -->
+                <div class="pt-2 border-t border-brand-border flex gap-2">
+                    <button onclick="saveSettings()" class="flex-1 py-2.5 bg-deepsky-500 text-black font-bold text-xs rounded-xl shadow-lg hover:bg-deepsky-400">Speichern</button>
+                    <button onclick="closeSettings()" class="py-2.5 px-4 bg-brand-bg border border-brand-border text-xs rounded-xl text-zinc-300">Abbrechen</button>
+                </div>
             </div>
-          </div>
-
-        </section>
-
-        <!-- TAB 2: BESTAND -->
-        <section id="tabInventory" class="hidden space-y-4">
-          
-          <!-- Search & Sync Toolbar -->
-          <div class="space-y-2">
-            <div class="flex gap-2">
-              <div class="relative flex-1">
-                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-zinc-500"></i>
-                <input type="text" id="searchInput" oninput="renderInventory()" placeholder="Marke, Sorte oder Nr..." 
-                  class="w-full bg-zinc-900 border border-zinc-800 focus:border-blue-500 rounded-xl pl-9 pr-3 h-10 text-xs text-white outline-none">
-              </div>
-              <button onclick="fetchFromCloud()" class="h-10 px-3 bg-zinc-900 border border-zinc-800 active:bg-zinc-800 text-blue-400 rounded-xl flex items-center gap-1 text-xs font-medium shrink-0">
-                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Sync
-              </button>
-            </div>
-
-            <!-- Export / Import Buttons -->
-            <div class="grid grid-cols-3 gap-2">
-              <button onclick="exportData('json')" class="h-9 bg-zinc-900 border border-zinc-800 active:bg-zinc-800 rounded-xl text-[11px] font-medium text-zinc-300 flex items-center justify-center gap-1">
-                <i data-lucide="download" class="w-3.5 h-3.5 text-blue-400"></i> JSON
-              </button>
-              <button onclick="exportData('csv')" class="h-9 bg-zinc-900 border border-zinc-800 active:bg-zinc-800 rounded-xl text-[11px] font-medium text-zinc-300 flex items-center justify-center gap-1">
-                <i data-lucide="file-text" class="w-3.5 h-3.5 text-emerald-400"></i> CSV
-              </button>
-              <label class="h-9 bg-zinc-900 border border-zinc-800 active:bg-zinc-800 rounded-xl text-[11px] font-medium text-zinc-300 flex items-center justify-center gap-1 cursor-pointer">
-                <i data-lucide="upload" class="w-3.5 h-3.5 text-amber-400"></i> Import
-                <input type="file" id="importFile" accept=".json" onchange="importData(event)" class="hidden">
-              </label>
-            </div>
-          </div>
-
-          <!-- Inventory List (Grouped by Brand) -->
-          <div id="inventoryContainer" class="space-y-3">
-            <!-- Dynamic Content -->
-          </div>
-
-        </section>
-
-      </main>
-
-      <!-- Bottom Navigation Bar -->
-      <nav class="fixed bottom-0 w-full max-w-[375px] bg-zinc-900/90 backdrop-blur-md border-t border-zinc-800/80 px-6 py-2 pb-safe z-30 flex justify-around">
-        <button onclick="switchTab('booking')" id="tabBtnBooking" class="flex flex-col items-center gap-1 text-blue-400">
-          <i data-lucide="plus-square" class="w-5 h-5"></i>
-          <span class="text-[10px] font-medium">Buchen</span>
-        </button>
-        <button onclick="switchTab('inventory')" id="tabBtnInventory" class="flex flex-col items-center gap-1 text-zinc-500">
-          <i data-lucide="boxes" class="w-5 h-5"></i>
-          <span class="text-[10px] font-medium">Bestand</span>
-        </button>
-      </nav>
-
-    </div>
-
-    <!-- First Time Item Registration Modal -->
-    <div id="newItemModal" class="absolute inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm hidden">
-      <div class="bg-zinc-900 border-t border-zinc-800 rounded-t-3xl p-5 w-full space-y-4">
-        <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
-          <div class="flex items-center gap-2">
-            <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i>
-            <h3 class="text-sm font-bold text-white">Neuer Artikel #<span id="modalItemNum"></span></h3>
-          </div>
-          <button onclick="closeNewItemModal()" class="text-zinc-400 p-1">
-            <i data-lucide="x" class="w-5 h-5"></i>
-          </button>
         </div>
 
-        <form id="newItemForm" onsubmit="saveNewItemAndBook(event)" class="space-y-3">
-          <div>
-            <label class="block text-[11px] font-medium text-zinc-400 mb-1">Marke *</label>
-            <input type="text" id="newBrand" required placeholder="z.B. Augustiner" class="w-full bg-zinc-950 border border-zinc-800 focus:border-blue-500 rounded-xl h-10 px-3 text-xs text-white outline-none">
-          </div>
-
-          <div>
-            <label class="block text-[11px] font-medium text-zinc-400 mb-1">Sorte *</label>
-            <input type="text" id="newSort" required placeholder="z.B. Helles" class="w-full bg-zinc-950 border border-zinc-800 focus:border-blue-500 rounded-xl h-10 px-3 text-xs text-white outline-none">
-          </div>
-
-          <div>
-            <label class="block text-[11px] font-medium text-zinc-400 mb-1">Füllmenge (Liter) *</label>
-            <input type="number" step="0.01" min="0.01" id="newVolume" required placeholder="z.B. 0.5" class="w-full bg-zinc-950 border border-zinc-800 focus:border-blue-500 rounded-xl h-10 px-3 text-xs text-white outline-none font-mono">
-          </div>
-
-          <div class="pt-2 flex gap-2">
-            <button type="button" onclick="closeNewItemModal()" class="flex-1 h-11 rounded-xl text-xs font-semibold text-zinc-400 bg-zinc-950 border border-zinc-800">
-              Abbrechen
-            </button>
-            <button type="submit" class="flex-1 h-11 bg-blue-600 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-600/20">
-              Speichern & Buchen
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- JSONBin.io Settings Modal -->
-    <div id="settingsModal" class="absolute inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm hidden">
-      <div class="bg-zinc-900 border-t border-zinc-800 rounded-t-3xl p-5 w-full space-y-4">
-        <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
-          <div class="flex items-center gap-2">
-            <i data-lucide="cloud" class="w-4 h-4 text-blue-400"></i>
-            <h3 class="text-sm font-bold text-white">Cloud Sync Einstellungen</h3>
-          </div>
-          <button onclick="closeSettingsModal()" class="text-zinc-400 p-1">
-            <i data-lucide="x" class="w-5 h-5"></i>
-          </button>
+        <!-- Toast Notification -->
+        <div id="toast" class="absolute top-16 left-1/2 -translate-x-1/2 z-50 bg-zinc-800 text-white border border-deepsky-500/50 px-4 py-2 rounded-full text-xs font-medium shadow-2xl transition-all duration-300 opacity-0 pointer-events-none flex items-center gap-2">
+            <i data-lucide="info" class="w-4 h-4 text-deepsky-500"></i>
+            <span id="toastMsg">Benachrichtigung</span>
         </div>
 
-        <div class="space-y-3">
-          <p class="text-[11px] text-zinc-400">
-            Trage hier deine Daten von JSONBin.io ein, um den Bestand live zwischen allen Geräten zu teilen.
-          </p>
-
-          <div>
-            <label class="block text-[11px] font-medium text-zinc-400 mb-1">Bin ID</label>
-            <input type="text" id="cfgBinId" placeholder="65f12345abc..." class="w-full bg-zinc-950 border border-zinc-800 focus:border-blue-500 rounded-xl h-10 px-3 text-xs text-white font-mono outline-none">
-          </div>
-
-          <div>
-            <label class="block text-[11px] font-medium text-zinc-400 mb-1">Master Key (API Key)</label>
-            <input type="password" id="cfgMasterKey" placeholder="$2a$10$..." class="w-full bg-zinc-950 border border-zinc-800 focus:border-blue-500 rounded-xl h-10 px-3 text-xs text-white font-mono outline-none">
-          </div>
-
-          <div class="pt-2 flex gap-2">
-            <button type="button" onclick="closeSettingsModal()" class="flex-1 h-11 rounded-xl text-xs font-semibold text-zinc-400 bg-zinc-950 border border-zinc-800">
-              Abbrechen
-            </button>
-            <button type="button" onclick="saveSettings()" class="flex-1 h-11 bg-blue-600 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-600/20">
-              Verbinden
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
 
-    <!-- Notification Toast -->
-    <div id="toast" class="absolute top-4 left-4 right-4 z-50 flex items-center gap-2.5 bg-zinc-900/95 border border-zinc-700 text-white px-3.5 py-3 rounded-2xl shadow-2xl transform -translate-y-20 opacity-0 transition-all duration-300">
-      <i id="toastIcon" data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400 shrink-0"></i>
-      <span id="toastMessage" class="text-xs font-medium">Aktion abgeschlossen</span>
-    </div>
+    <!-- ============================================================== -->
+    <!-- JAVASCRIPT LOGIK -->
+    <!-- ============================================================== -->
+    <script>
+        // =================================================================
+        // CONFIGURATION & ZUGANGSDATEN (LEICHT ZU FINDEN)
+        // =================================================================
+        let CONFIG_BIN_ID = "6ad890beac6210605a4541a5";
+        let CONFIG_MASTER_KEY = "$2a$10$.mIeRoeBg89gaf9lEZn0vuOSzzGr4se/Z98CNP0ANIP2zCRkZzTkG";
+        let APP_PIN = "123456";
 
-  </div>
+        // APP STATE
+        let currentPinInput = "";
+        let currentBookingType = "IN"; // "IN" oder "OUT"
+        let inventory = {}; // Structure: { "101": { id: "101", marke: "Coca-Cola", sorte: "Zero", liter: 0.5, menge: 24 } }
 
+        // SAMPLE DEMO DATA (falls noch leer)
+        const sampleItems = {
+            "101": { id: "101", marke: "Coca-Cola", sorte: "Zero", liter: 0.5, menge: 24 },
+            "102": { id: "102", marke: "Paulaner", sorte: "Spezi", liter: 0.5, menge: 40 },
+            "103": { id: "103", marke: "Augustiner", sorte: "Helles", liter: 0.5, menge: 12 },
+            "104": { id: "104", marke: "Red Bull", sorte: "Classic", liter: 0.25, menge: 18 },
+            "105": { id: "105", marke: "Adelholzener", sorte: "Mineralwasser", liter: 0.7, menge: 30 }
+        };
+
+        // =================================================================
+        // INITIALISIERUNG
+        // =================================================================
+        window.onload = function() {
+            lucide.createIcons();
+            loadLocalConfig();
+            loadInventoryData();
+        };
+
+        function loadLocalConfig() {
+            const savedBin = localStorage.getItem("getraenke_bin_id");
+            const savedKey = localStorage.getItem("getraenke_master_key");
+            const savedPin = localStorage.getItem("getraenke_pin");
+
+            if (savedBin) CONFIG_BIN_ID = savedBin;
+            if (savedKey) CONFIG_MASTER_KEY = savedKey;
+            if (savedPin) APP_PIN = savedPin;
+
+            // Fill settings fields
+            document.getElementById("cfgBinId").value = CONFIG_BIN_ID;
+            document.getElementById("cfgMasterKey").value = CONFIG_MASTER_KEY;
+            document.getElementById("cfgPin").value = APP_PIN;
+        }
+
+        // =================================================================
+        // PIN LOCK SCHUTZ
+        // =================================================================
+        function pressPin(digit) {
+            if (currentPinInput.length < 6) {
+                currentPinInput += digit;
+                updatePinDots();
+                if (currentPinInput.length === 6) {
+                    setTimeout(verifyPin, 150);
+                }
+            }
+        }
+
+        function deletePinDigit() {
+            if (currentPinInput.length > 0) {
+                currentPinInput = currentPinInput.slice(0, -1);
+                updatePinDots();
+            }
+        }
+
+        function clearPin() {
+            currentPinInput = "";
+            updatePinDots();
+        }
+
+        function updatePinDots() {
+            for (let i = 0; i < 4; i++) {
+                const dot = document.getElementById(`dot${i}`);
+                if (i < currentPinInput.length) {
+                    dot.classList.add("filled");
+                } else {
+                    dot.classList.remove("filled");
+                }
+            }
+        }
+
+        function verifyPin() {
+            if (currentPinInput === APP_PIN) {
+                document.getElementById("pinScreen").classList.add("hidden");
+                showToast("Erfolgreich entsperrt");
+            } else {
+                const err = document.getElementById("pinError");
+                err.classList.remove("opacity-0");
+                clearPin();
+                setTimeout(() => {
+                    err.classList.add("opacity-0");
+                }, 2000);
+            }
+        }
+
+        // =================================================================
+        // TABS & NAV
+        // =================================================================
+        function switchTab(tabName) {
+            const tabBuchen = document.getElementById("tab-buchen");
+            const tabBestand = document.getElementById("tab-bestand");
+            const navBuchen = document.getElementById("navBtnBuchen");
+            const navBestand = document.getElementById("navBtnBestand");
+
+            if (tabName === 'buchen') {
+                tabBuchen.classList.remove("hidden");
+                tabBestand.classList.add("hidden");
+                
+                navBuchen.className = "py-2.5 rounded-xl flex flex-col items-center justify-center transition-all bg-deepsky-500/10 text-deepsky-500 border border-deepsky-500/30";
+                navBestand.className = "py-2.5 rounded-xl flex flex-col items-center justify-center transition-all text-zinc-400 hover:text-zinc-200 border border-transparent";
+            } else {
+                tabBuchen.classList.add("hidden");
+                tabBestand.classList.remove("hidden");
+
+                navBestand.className = "py-2.5 rounded-xl flex flex-col items-center justify-center transition-all bg-deepsky-500/10 text-deepsky-500 border border-deepsky-500/30";
+                navBuchen.className = "py-2.5 rounded-xl flex flex-col items-center justify-center transition-all text-zinc-400 hover:text-zinc-200 border border-transparent";
+                
+                renderStock();
+            }
+        }
+
+        // =================================================================
+        // BUCHUNGSLOGIK & FORMULAR
+        // =================================================================
+        function setBookingType(type) {
+            currentBookingType = type;
+            const inBtn = document.getElementById("typeInBtn");
+            const outBtn = document.getElementById("typeOutBtn");
+
+            if (type === 'IN') {
+                inBtn.className = "py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all bg-deepsky-500 text-black shadow-md";
+                outBtn.className = "py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all text-zinc-400 hover:text-white";
+            } else {
+                outBtn.className = "py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all bg-rose-500 text-white shadow-md";
+                inBtn.className = "py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all text-zinc-400 hover:text-white";
+            }
+        }
+
+        function adjustAmount(delta) {
+            const input = document.getElementById("inputMenge");
+            let val = parseInt(input.value) || 1;
+            val += delta;
+            if (val < 1) val = 1;
+            input.value = val;
+        }
+
+        function onArtNrChange() {
+            const id = document.getElementById("inputArtNr").value.trim();
+            const newFields = document.getElementById("newArticleFields");
+            const badge = document.getElementById("articleStatusBadge");
+
+            if (!id) {
+                newFields.classList.add("hidden");
+                badge.classList.add("hidden");
+                return;
+            }
+
+            if (inventory[id]) {
+                // Bekannter Artikel
+                newFields.classList.add("hidden");
+                badge.classList.remove("hidden", "bg-emerald-500/10", "text-emerald-400", "border-emerald-500/20");
+                badge.classList.add("bg-deepsky-500/10", "text-deepsky-400", "border", "border-deepsky-500/20");
+                badge.textContent = `${inventory[id].marke} ${inventory[id].sorte} (${inventory[id].menge} Stk.)`;
+            } else {
+                // Neuer Artikel
+                newFields.classList.remove("hidden");
+                badge.classList.remove("hidden", "bg-deepsky-500/10", "text-deepsky-400", "border-deepsky-500/20");
+                badge.classList.add("bg-amber-500/10", "text-amber-400", "border", "border-amber-500/20");
+                badge.textContent = "Neu";
+            }
+        }
+
+        function selectQuickArticle(id) {
+            document.getElementById("inputArtNr").value = id;
+            onArtNrChange();
+            showToast(`Artikel #${id} ausgewählt`);
+        }
+
+        function executeBooking() {
+            const id = document.getElementById("inputArtNr").value.trim();
+            const menge = parseInt(document.getElementById("inputMenge").value) || 0;
+
+            if (!id) {
+                showToast("Bitte Artikel-ID eingeben");
+                return;
+            }
+
+            if (menge <= 0) {
+                showToast("Ungültige Menge");
+                return;
+            }
+
+            if (inventory[id]) {
+                // Bestand anpassen
+                if (currentBookingType === 'IN') {
+                    inventory[id].menge += menge;
+                } else {
+                    if (inventory[id].menge < menge) {
+                        showToast("Warnung: Bestand wird negativ!");
+                    }
+                    inventory[id].menge -= menge;
+                    if (inventory[id].menge < 0) inventory[id].menge = 0;
+                }
+            } else {
+                // Neuer Artikel
+                const marke = document.getElementById("inputMarke").value.trim();
+                const sorte = document.getElementById("inputSorte").value.trim();
+                const liter = parseFloat(document.getElementById("inputLiter").value) || 0;
+
+                if (!marke || !sorte || liter <= 0) {
+                    showToast("Bitte Marke, Sorte & Liter korrekt ausfüllen");
+                    return;
+                }
+
+                inventory[id] = {
+                    id: id,
+                    marke: marke,
+                    sorte: sorte,
+                    liter: liter,
+                    menge: currentBookingType === 'IN' ? menge : 0
+                };
+            }
+
+            // Formular zurücksetzen & GUI aktualisieren
+            document.getElementById("inputArtNr").value = "";
+            document.getElementById("inputMarke").value = "";
+            document.getElementById("inputSorte").value = "";
+            document.getElementById("inputLiter").value = "";
+            document.getElementById("inputMenge").value = "1";
+            onArtNrChange();
+
+            showToast("Buchung erfolgreich gespeichert");
+            saveInventoryData();
+        }
+
+        // =================================================================
+        // SCHNELLAUSWAHL (ALPHABETISCH NACH MARKE)
+        // =================================================================
+        function renderQuickSelect() {
+            const container = document.getElementById("quickSelectContainer");
+            const countBadge = document.getElementById("quickSelectCount");
+
+            // Artikel in Array umwandeln und ALPHABETISCH NACH MARKE SORTIEREN
+            const items = Object.values(inventory).sort((a, b) => {
+                const markeA = (a.marke || "").toLowerCase();
+                const markeB = (b.marke || "").toLowerCase();
+                if (markeA < markeB) return -1;
+                if (markeA > markeB) return 1;
+                // Bei gleicher Marke nach Sorte sortieren
+                return (a.sorte || "").localeCompare(b.sorte || "");
+            });
+
+            countBadge.textContent = `${items.length} Artikel`;
+
+            if (items.length === 0) {
+                container.innerHTML = `<span class="text-xs text-zinc-500 py-1">Keine Artikel erfasst</span>`;
+                return;
+            }
+
+            container.innerHTML = items.map(item => {
+                // Format: Erste drei Buchstaben der Marke + Sorte (z.B. "COK - Zero")
+                const markePrefix = (item.marke || "UNK").substring(0, 3).toUpperCase();
+                const label = `${markePrefix} - ${item.sorte}`;
+
+                return `
+                    <button type="button" onclick="selectQuickArticle('${item.id}')" 
+                        class="shrink-0 px-3 py-2 bg-brand-bg border border-deepsky-500/40 hover:border-deepsky-500 active:bg-deepsky-500/20 rounded-xl flex flex-col items-start transition-all group">
+                        <span class="text-xs font-bold text-deepsky-500 group-hover:text-white transition-colors">${escapeHtml(label)}</span>
+                        <span class="text-[9px] text-zinc-400">${item.menge} Stk. • ${item.liter}L</span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        // =================================================================
+        // BESTANDSLISTE (ALPHABETISCH NACH MARKE)
+        // =================================================================
+        function renderStock() {
+            const container = document.getElementById("stockListContainer");
+            const searchTerm = document.getElementById("searchStock").value.toLowerCase();
+
+            // Alphabetisch nach Marke sortieren
+            const items = Object.values(inventory).sort((a, b) => {
+                const markeA = (a.marke || "").toLowerCase();
+                const markeB = (b.marke || "").toLowerCase();
+                if (markeA < markeB) return -1;
+                if (markeA > markeB) return 1;
+                return (a.sorte || "").localeCompare(b.sorte || "");
+            });
+
+            // Filtern
+            const filtered = items.filter(item => 
+                item.marke.toLowerCase().includes(searchTerm) ||
+                item.sorte.toLowerCase().includes(searchTerm) ||
+                item.id.toLowerCase().includes(searchTerm)
+            );
+
+            // Statistik berechnen
+            let totalItems = 0;
+            let totalLiters = 0;
+            items.forEach(i => {
+                totalItems += (i.menge || 0);
+                totalLiters += ((i.menge || 0) * (i.liter || 0));
+            });
+
+            document.getElementById("statTotalItems").textContent = `${totalItems} Stk.`;
+            document.getElementById("statTotalLiters").textContent = `${totalLiters.toFixed(2)} L`;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-zinc-500 text-xs">
+                        Keine Getränke im Bestand gefunden.
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(item => {
+                const totalVol = ((item.menge || 0) * (item.liter || 0)).toFixed(1);
+                const isLow = item.menge <= 5;
+
+                return `
+                    <div class="bg-brand-card border border-brand-border rounded-xl p-3 flex justify-between items-center hover:border-zinc-700 transition-all">
+                        <div class="space-y-0.5">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold text-white">${escapeHtml(item.marke)}</span>
+                                <span class="text-[10px] bg-brand-bg px-1.5 py-0.5 rounded text-zinc-400 border border-brand-border">#${escapeHtml(item.id)}</span>
+                            </div>
+                            <div class="text-xs text-zinc-400">
+                                ${escapeHtml(item.sorte)} • <span class="text-deepsky-400 font-medium">${item.liter}L</span>
+                            </div>
+                        </div>
+
+                        <div class="text-right">
+                            <div class="text-sm font-extrabold ${isLow ? 'text-rose-400' : 'text-deepsky-400'}">
+                                ${item.menge} <span class="text-[10px] font-normal text-zinc-400">Stk.</span>
+                            </div>
+                            <div class="text-[10px] text-zinc-500 font-medium">
+                                Gesamt: ${totalVol} Liter
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // =================================================================
+        // JSONBIN.IO SYNCHRONISATION
+        // =================================================================
+        async function loadInventoryData() {
+            setSyncStatus("loading", "Lade Daten...");
+
+            if (!CONFIG_BIN_ID || CONFIG_BIN_ID.includes("EINFUEGEN")) {
+                // Lokalen Speicher nutzen
+                const local = localStorage.getItem("getraenke_inventory");
+                if (local) {
+                    try { inventory = JSON.parse(local); } catch(e) { inventory = sampleItems; }
+                } else {
+                    inventory = sampleItems;
+                }
+                setSyncStatus("ready", "Lokal gespeichert");
+                updateUI();
+                return;
+            }
+
+            try {
+                const res = await fetch(`https://api.jsonbin.io/v3/b/${CONFIG_BIN_ID}/latest`, {
+                    headers: {
+                        "X-Master-Key": CONFIG_MASTER_KEY
+                    }
+                });
+
+                if (!res.ok) throw new Error("HTTP Fehler " + res.status);
+                const data = await res.json();
+                
+                if (data.record && typeof data.record === "object") {
+                    inventory = data.record;
+                    localStorage.setItem("getraenke_inventory", JSON.stringify(inventory));
+                    setSyncStatus("ready", "JSONBin Synchronisiert");
+                }
+            } catch (err) {
+                console.warn("JSONBin Sync fehlgeschlagen, lade lokal:", err);
+                const local = localStorage.getItem("getraenke_inventory");
+                if (local) {
+                    try { inventory = JSON.parse(local); } catch(e) { inventory = sampleItems; }
+                } else {
+                    inventory = sampleItems;
+                }
+                setSyncStatus("error", "Offline / Lokal");
+            }
+
+            updateUI();
+        }
+
+        async function saveInventoryData() {
+            localStorage.setItem("getraenke_inventory", JSON.stringify(inventory));
+            updateUI();
+
+            if (!CONFIG_BIN_ID || CONFIG_BIN_ID.includes("EINFUEGEN")) {
+                return;
+            }
+
+            setSyncStatus("loading", "Speichere...");
+
+            try {
+                const res = await fetch(`https://api.jsonbin.io/v3/b/${CONFIG_BIN_ID}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Master-Key": CONFIG_MASTER_KEY
+                    },
+                    body: JSON.stringify(inventory)
+                });
+
+                if (!res.ok) throw new Error("HTTP " + res.status);
+                setSyncStatus("ready", "JSONBin Synchronisiert");
+            } catch (err) {
+                console.error("Speichern fehlgeschlagen:", err);
+                setSyncStatus("error", "Sync Fehler");
+            }
+        }
+
+        function syncData() {
+            const icon = document.getElementById("syncIcon");
+            icon.classList.add("animate-spin");
+            loadInventoryData().then(() => {
+                setTimeout(() => icon.classList.remove("animate-spin"), 600);
+            });
+        }
+
+        function setSyncStatus(state, msg) {
+            const badge = document.getElementById("syncStatus");
+            if (state === "loading") {
+                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span> ${msg}`;
+            } else if (state === "error") {
+                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> ${msg}`;
+            } else {
+                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> ${msg}`;
+            }
+        }
+
+        function updateUI() {
+            renderQuickSelect();
+            renderStock();
+        }
+
+        // =================================================================
+        // EINSTELLUNGEN & IMPORT / EXPORT
+        // =================================================================
+        function openSettings() {
+            document.getElementById("settingsModal").classList.remove("hidden");
+        }
+
+        function closeSettings() {
+            document.getElementById("settingsModal").classList.add("hidden");
+        }
+
+        function saveSettings() {
+            CONFIG_BIN_ID = document.getElementById("cfgBinId").value.trim();
+            CONFIG_MASTER_KEY = document.getElementById("cfgMasterKey").value.trim();
+            APP_PIN = document.getElementById("cfgPin").value.trim() || "123456";
+
+            localStorage.setItem("getraenke_bin_id", CONFIG_BIN_ID);
+            localStorage.setItem("getraenke_master_key", CONFIG_MASTER_KEY);
+            localStorage.setItem("getraenke_pin", APP_PIN);
+
+            closeSettings();
+            showToast("Einstellungen gespeichert");
+            syncData();
+        }
+
+        function exportJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(inventory, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `getraenkelager_backup_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast("Export gestartet");
+        }
+
+        function triggerImport() {
+            document.getElementById("importFileInput").click();
+        }
+
+        function importJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (typeof importedData === 'object') {
+                        inventory = importedData;
+                        saveInventoryData();
+                        showToast("Daten erfolgreich importiert");
+                        closeSettings();
+                    } else {
+                        throw new Error("Ungültiges Format");
+                    }
+                } catch (err) {
+                    showToast("Fehler beim Importieren der Datei");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Helper Toast
+        function showToast(msg) {
+            const toast = document.getElementById("toast");
+            const toastMsg = document.getElementById("toastMsg");
+            toastMsg.textContent = msg;
+            toast.classList.remove("opacity-0", "pointer-events-none");
+            toast.classList.add("opacity-100");
+            setTimeout(() => {
+                toast.classList.remove("opacity-100");
+                toast.classList.add("opacity-0", "pointer-events-none");
+            }, 2500);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text.replace(/[&<>"']/g, function(m) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[m];
+            });
+        }
+    </script>
 </body>
 </html>
