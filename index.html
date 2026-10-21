@@ -14,9 +14,7 @@
         extend: {
           colors: {
             brand: {
-              bg: '#09090b',       // Deep Dark Zinc 950
-              card: '#18181b',     // Card Background Zinc 900
-              border: '#27272a',   // Border Color Zinc 800
+              bg: '#09090b',       // Deep Dark Background
               sky: '#00bfff',      // Deep Sky Blue Accent
               skyHover: '#0099cc',
               amber: '#f59e0b',
@@ -42,14 +40,44 @@
     input, button, select {
       touch-action: manipulation;
     }
+    /* Glassmorphism utility classes */
+    .glass-card {
+      background: rgba(24, 24, 27, 0.55);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-input {
+      background: rgba(9, 9, 11, 0.6);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
   </style>
 </head>
-<body class="bg-brand-bg text-zinc-100 min-h-full font-sans antialiased flex flex-col justify-between">
+<body class="bg-brand-bg text-zinc-100 min-h-full font-sans antialiased flex flex-col justify-between relative overflow-x-hidden">
+
+  <!-- HINTERGRUND-GLOW EFFECT -->
+  <div class="fixed top-[-10%] left-[-10%] w-[50%] h-[40%] bg-sky-500/10 rounded-full blur-[120px] pointer-events-none"></div>
+  <div class="fixed bottom-[-10%] right-[-10%] w-[50%] h-[40%] bg-sky-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+
+  <!-- TOAST NOTIFICATION FOR BOOKING CONFIRMATION -->
+  <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 opacity-0 transform -translate-y-4 pointer-events-none w-[90%] max-w-xs">
+    <div id="toast-content" class="glass-card px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-brand-sky/30">
+      <div id="toast-icon" class="w-8 h-8 rounded-xl bg-brand-sky/20 text-brand-sky flex items-center justify-center font-bold text-sm">
+        <i class="fa-solid fa-check"></i>
+      </div>
+      <div>
+        <p id="toast-title" class="text-xs font-bold text-white">Buchung erfolgreich</p>
+        <p id="toast-msg" class="text-[11px] text-zinc-300">Astra Rakete gebucht</p>
+      </div>
+    </div>
+  </div>
 
   <!-- 1. PIN-LOCKSCREEN (6 PUNKTE) -->
-  <div id="pin-screen" class="fixed inset-0 bg-brand-bg z-50 flex flex-col items-center justify-center p-6">
+  <div id="pin-screen" class="fixed inset-0 bg-brand-bg/95 backdrop-blur-xl z-50 flex flex-col items-center justify-center p-6">
     <div class="text-center mb-8">
-      <div class="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto mb-4 text-brand-sky shadow-lg shadow-sky-950/30">
+      <div class="w-16 h-16 rounded-2xl glass-card flex items-center justify-center mx-auto mb-4 text-brand-sky shadow-lg shadow-sky-950/40 border border-brand-sky/20">
         <i class="fa-solid fa-wine-bottle text-2xl"></i>
       </div>
       <h1 class="text-2xl font-bold tracking-tight text-white">Getränkelager</h1>
@@ -68,20 +96,20 @@
 
     <!-- NUMPAD -->
     <div class="grid grid-cols-3 gap-4 w-full max-w-[280px]">
-      <button onclick="pressPinDigit('1')" class="h-16 rounded-full bg-brand-card border border-brand-border text-2xl font-semibold active:bg-zinc-800 transition-colors">1</button>
-      <button onclick="pressPinDigit('2')" class="h-16 rounded-full bg-brand-card border border-brand-border text-2xl font-semibold active:bg-zinc-800 transition-colors">2</button>
-      <button onclick="pressPinDigit('3')" class="h-16 rounded-full bg-brand-card border border-brand-border text-2xl font-semibold active:bg-zinc-800 transition-colors">3</button>
-      <button onclick="pressPinDigit('4')" class="h-16 rounded-full bg-brand-card border border-brand-border text-2xl font-semibold active:bg-zinc-800 transition-colors">4</button>
-      <button onclick="pressPinDigit('5')" class="h-16 rounded-full bg-brand-card border border-brand-border text-2xl font-semibold active:bg-zinc-800 transition-colors">5</button>
-      <button onclick="pressPinDigit('6')" class="h-16 rounded-full bg-brand-card border border-brand-border text-2xl font-semibold active:bg-zinc-800 transition-colors">6</button>
-      <button onclick="pressPinDigit('7')" class="h-16 rounded-full bg-brand-card border border-brand-border text-2xl font-semibold active:bg-zinc-800 transition-colors">7</button>
-      <button onclick="pressPinDigit('8')" class="h-16 rounded-full bg-brand-card border border-brand-border text-2xl font-semibold active:bg-zinc-800 transition-colors">8</button>
-      <button onclick="pressPinDigit('9')" class="h-16 rounded-full bg-brand-card border border-brand-border text-2xl font-semibold active:bg-zinc-800 transition-colors">9</button>
-      <button onclick="clearPin()" class="h-16 rounded-full bg-zinc-900 border border-brand-border text-zinc-400 active:bg-zinc-800 transition-colors flex items-center justify-center">
+      <button onclick="pressPinDigit('1')" class="h-16 rounded-2xl glass-card text-2xl font-semibold active:scale-95 transition-all">1</button>
+      <button onclick="pressPinDigit('2')" class="h-16 rounded-2xl glass-card text-2xl font-semibold active:scale-95 transition-all">2</button>
+      <button onclick="pressPinDigit('3')" class="h-16 rounded-2xl glass-card text-2xl font-semibold active:scale-95 transition-all">3</button>
+      <button onclick="pressPinDigit('4')" class="h-16 rounded-2xl glass-card text-2xl font-semibold active:scale-95 transition-all">4</button>
+      <button onclick="pressPinDigit('5')" class="h-16 rounded-2xl glass-card text-2xl font-semibold active:scale-95 transition-all">5</button>
+      <button onclick="pressPinDigit('6')" class="h-16 rounded-2xl glass-card text-2xl font-semibold active:scale-95 transition-all">6</button>
+      <button onclick="pressPinDigit('7')" class="h-16 rounded-2xl glass-card text-2xl font-semibold active:scale-95 transition-all">7</button>
+      <button onclick="pressPinDigit('8')" class="h-16 rounded-2xl glass-card text-2xl font-semibold active:scale-95 transition-all">8</button>
+      <button onclick="pressPinDigit('9')" class="h-16 rounded-2xl glass-card text-2xl font-semibold active:scale-95 transition-all">9</button>
+      <button onclick="clearPin()" class="h-16 rounded-2xl glass-card text-zinc-400 active:scale-95 transition-all flex items-center justify-center">
         <i class="fa-solid fa-rotate-left"></i>
       </button>
-      <button onclick="pressPinDigit('0')" class="h-16 rounded-full bg-brand-card border border-brand-border text-2xl font-semibold active:bg-zinc-800 transition-colors">0</button>
-      <button onclick="deletePinDigit()" class="h-16 rounded-full bg-zinc-900 border border-brand-border text-zinc-400 active:bg-zinc-800 transition-colors flex items-center justify-center">
+      <button onclick="pressPinDigit('0')" class="h-16 rounded-2xl glass-card text-2xl font-semibold active:scale-95 transition-all">0</button>
+      <button onclick="deletePinDigit()" class="h-16 rounded-2xl glass-card text-zinc-400 active:scale-95 transition-all flex items-center justify-center">
         <i class="fa-solid fa-delete-left"></i>
       </button>
     </div>
@@ -90,10 +118,10 @@
   </div>
 
   <!-- MAIN APP CONTAINER -->
-  <div id="app-container" class="hidden flex-1 max-w-sm mx-auto w-full p-4 flex flex-col pb-20">
+  <div id="app-container" class="hidden flex-1 max-w-sm mx-auto w-full p-4 flex flex-col pb-20 relative z-10">
     
     <!-- HEADER -->
-    <header class="flex items-center justify-between py-3 mb-4 border-b border-brand-border">
+    <header class="flex items-center justify-between py-3 mb-4 border-b border-white/10">
       <div class="flex items-center gap-2">
         <i class="fa-solid fa-boxes-stacked text-brand-sky text-xl"></i>
         <h1 class="text-xl font-bold tracking-wide text-white">Getränkelager</h1>
@@ -107,11 +135,11 @@
     </header>
 
     <!-- NAVIGATION TABS -->
-    <div class="grid grid-cols-2 bg-brand-card p-1 rounded-xl border border-brand-border mb-4">
-      <button id="tab-inventory-btn" onclick="switchTab('inventory')" class="py-2 text-sm font-medium rounded-lg transition-all bg-brand-sky text-zinc-950 font-bold shadow-sm">
+    <div class="grid grid-cols-2 glass-card p-1 rounded-2xl border border-white/10 mb-4">
+      <button id="tab-inventory-btn" onclick="switchTab('inventory')" class="py-2 text-sm font-medium rounded-xl transition-all bg-brand-sky text-zinc-950 font-bold shadow-sm shadow-sky-950/30">
         <i class="fa-solid fa-boxes-packing mr-1.5"></i> Bestand
       </button>
-      <button id="tab-quick-btn" onclick="switchTab('quick')" class="py-2 text-sm font-medium rounded-lg transition-all text-zinc-400 hover:text-white">
+      <button id="tab-quick-btn" onclick="switchTab('quick')" class="py-2 text-sm font-medium rounded-xl transition-all text-zinc-400 hover:text-white">
         <i class="fa-solid fa-right-left mr-1.5"></i> Buchen
       </button>
     </div>
@@ -120,7 +148,7 @@
     <div id="tab-inventory" class="space-y-4 flex-1">
       
       <!-- Dashboard Stats -->
-      <div class="bg-gradient-to-r from-zinc-900 to-zinc-900/80 p-4 rounded-xl border border-brand-border flex items-center justify-between shadow-sm">
+      <div class="glass-card p-4 rounded-2xl flex items-center justify-between shadow-lg">
         <div>
           <p class="text-xs text-zinc-400 uppercase tracking-wider font-semibold">Gesamter Lagerbestand</p>
           <p id="total-liters" class="text-2xl font-extrabold text-brand-sky mt-0.5">0.00 <span class="text-sm font-normal text-zinc-400">Liter</span></p>
@@ -134,7 +162,7 @@
       <!-- Suche -->
       <div class="relative">
         <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 text-sm"></i>
-        <input type="text" id="search-input" oninput="renderInventory()" placeholder="Marke, Sorte oder EAN suchen..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-brand-card border border-brand-border text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-brand-sky transition-colors">
+        <input type="text" id="search-input" oninput="renderInventory()" placeholder="Marke, Sorte oder EAN suchen..." class="w-full pl-10 pr-4 py-2.5 rounded-2xl glass-input text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-brand-sky transition-colors">
       </div>
 
       <!-- Bestandsliste (NUR ANZEIGE) -->
@@ -145,60 +173,60 @@
 
     <!-- TAB 2: BUCHEN (Eingang / Ausgang & Mengenauswahl) -->
     <div id="tab-quick" class="hidden space-y-4 flex-1">
-      <div class="bg-brand-card p-4 rounded-xl border border-brand-border space-y-4">
+      <div class="glass-card p-4 rounded-2xl space-y-4">
         
         <div>
           <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">1. Getränk auswählen</label>
-          <select id="quick-select" class="w-full bg-zinc-950 border border-brand-border rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-sky transition-colors">
-            <!-- Dynamische Befüllung -->
+          <select id="quick-select" class="w-full glass-input rounded-2xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-sky transition-colors">
+            <!-- Dynamische Befüllung ohne Vorbelegung -->
           </select>
         </div>
 
         <div>
           <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">2. Menge wählen</label>
           <div class="flex items-center gap-2">
-            <button onclick="setAmount(1)" class="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-xs font-bold rounded-lg border border-brand-border">1</button>
-            <button onclick="setAmount(2)" class="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-xs font-bold rounded-lg border border-brand-border">2</button>
-            <button onclick="setAmount(6)" class="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-xs font-bold rounded-lg border border-brand-border">6 (Träger)</button>
-            <button onclick="setAmount(20)" class="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-xs font-bold rounded-lg border border-brand-border">20 (Kiste)</button>
+            <button onclick="setAmount(1)" class="px-3 py-2 glass-card hover:bg-white/10 text-xs font-bold rounded-xl">1</button>
+            <button onclick="setAmount(2)" class="px-3 py-2 glass-card hover:bg-white/10 text-xs font-bold rounded-xl">2</button>
+            <button onclick="setAmount(6)" class="px-3 py-2 glass-card hover:bg-white/10 text-xs font-bold rounded-xl">6 (Träger)</button>
+            <button onclick="setAmount(20)" class="px-3 py-2 glass-card hover:bg-white/10 text-xs font-bold rounded-xl">20 (Kiste)</button>
           </div>
           <div class="mt-2">
-            <input type="number" id="booking-amount" value="1" min="1" class="w-full bg-zinc-950 border border-brand-border rounded-xl p-2.5 text-center text-lg font-bold text-brand-sky focus:outline-none focus:border-brand-sky">
+            <input type="number" id="booking-amount" value="1" min="1" class="w-full glass-input rounded-2xl p-2.5 text-center text-lg font-bold text-brand-sky focus:outline-none focus:border-brand-sky">
           </div>
         </div>
 
         <div class="grid grid-cols-2 gap-3 pt-2">
-          <button onclick="executeBooking(1)" class="py-3 bg-brand-sky text-zinc-950 font-bold rounded-xl active:bg-brand-skyHover transition-colors flex items-center justify-center gap-2 shadow-lg shadow-sky-950/20">
+          <button onclick="executeBooking(1)" class="py-3 bg-brand-sky text-zinc-950 font-bold rounded-2xl active:bg-brand-skyHover transition-all flex items-center justify-center gap-2 shadow-lg shadow-sky-950/40">
             <i class="fa-solid fa-plus text-lg"></i> Eingang
           </button>
-          <button onclick="executeBooking(-1)" class="py-3 bg-zinc-800 text-brand-rose border border-zinc-700 font-bold rounded-xl active:bg-zinc-700 transition-colors flex items-center justify-center gap-2">
+          <button onclick="executeBooking(-1)" class="py-3 bg-zinc-900/80 text-brand-rose border border-rose-500/30 font-bold rounded-2xl active:bg-zinc-800 transition-all flex items-center justify-center gap-2">
             <i class="fa-solid fa-minus text-lg"></i> Ausgang
           </button>
         </div>
       </div>
 
       <!-- NEUES GETRÄNK MIT EAN ANLEGEN -->
-      <div class="bg-brand-card p-4 rounded-xl border border-brand-border space-y-3">
-        <h3 class="text-sm font-semibold text-white flex items-center gap-2 border-b border-brand-border pb-2">
+      <div class="glass-card p-4 rounded-2xl space-y-3">
+        <h3 class="text-sm font-semibold text-white flex items-center gap-2 border-b border-white/10 pb-2">
           <i class="fa-solid fa-barcode text-brand-sky"></i> Neues Getränk / EAN anlegen
         </h3>
         <div>
           <label class="block text-xs text-zinc-400 mb-1">EAN / Barcode (ID)</label>
-          <input type="text" id="new-ean" placeholder="z. B. 4002343021205" class="w-full bg-zinc-950 border border-brand-border rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-brand-sky">
+          <input type="text" id="new-ean" placeholder="z. B. 4002343021205" class="w-full glass-input rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-brand-sky">
         </div>
         <div>
           <label class="block text-xs text-zinc-400 mb-1">Marke</label>
-          <input type="text" id="new-brand" placeholder="z. B. Astra" class="w-full bg-zinc-950 border border-brand-border rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-brand-sky">
+          <input type="text" id="new-brand" placeholder="z. B. Astra" class="w-full glass-input rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-brand-sky">
         </div>
         <div>
           <label class="block text-xs text-zinc-400 mb-1">Sorte</label>
-          <input type="text" id="new-variety" placeholder="z. B. Rakete" class="w-full bg-zinc-950 border border-brand-border rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-brand-sky">
+          <input type="text" id="new-variety" placeholder="z. B. Rakete" class="w-full glass-input rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-brand-sky">
         </div>
         <div>
           <label class="block text-xs text-zinc-400 mb-1">Füllmenge (Liter)</label>
-          <input type="number" step="0.01" id="new-volume" placeholder="z. B. 0.33" class="w-full bg-zinc-950 border border-brand-border rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-brand-sky">
+          <input type="number" step="0.01" id="new-volume" placeholder="z. B. 0.33" class="w-full glass-input rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-brand-sky">
         </div>
-        <button onclick="addNewItem()" class="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white font-medium text-sm rounded-lg border border-brand-border transition-colors mt-2">
+        <button onclick="addNewItem()" class="w-full py-2.5 glass-card hover:bg-white/10 text-white font-medium text-sm rounded-xl transition-colors mt-2">
           Hinzufügen
         </button>
       </div>
@@ -210,10 +238,9 @@
   <script>
     // -------------------------------------------------------------
     // CONFIGURATION (JSONBin.io)
-    // Trage hier deine Keys ein:
     // -------------------------------------------------------------
-    let CONFIG_BIN_ID = "6ad890beac6210605a4541a5";
-    let CONFIG_MASTER_KEY = "$2a$10$.mIeRoeBg89gaf9lEZn0vuOSzzGr4se/Z98CNP0ANIP2zCRkZzTkG";
+    let CONFIG_BIN_ID = "DEINE_BIN_ID_HIER_EINFUEGEN";
+    let CONFIG_MASTER_KEY = "DEIN_MASTER_KEY_HIER_EINFUEGEN";
 
     // 6-stelliger PIN
     const PIN_CODE = "123456";
@@ -231,6 +258,33 @@
         volume: parseFloat(item.volume !== undefined ? item.volume : item.Volume) || 0,
         stock: parseInt(item.stock !== undefined ? item.stock : (item.quantity !== undefined ? item.quantity : item.Stock)) || 0
       };
+    }
+
+    // TOAST NOTIFICATION BENACHRICHTIGUNG
+    function showToast(title, msg, isSuccess = true) {
+      const toast = document.getElementById('toast');
+      const toastIcon = document.getElementById('toast-icon');
+      const toastTitle = document.getElementById('toast-title');
+      const toastMsg = document.getElementById('toast-msg');
+
+      toastTitle.innerText = title;
+      toastMsg.innerText = msg;
+
+      if (isSuccess) {
+        toastIcon.className = "w-8 h-8 rounded-xl bg-brand-emerald/20 text-brand-emerald flex items-center justify-center font-bold text-sm";
+        toastIcon.innerHTML = '<i class="fa-solid fa-plus"></i>';
+      } else {
+        toastIcon.className = "w-8 h-8 rounded-xl bg-brand-rose/20 text-brand-rose flex items-center justify-center font-bold text-sm";
+        toastIcon.innerHTML = '<i class="fa-solid fa-minus"></i>';
+      }
+
+      toast.classList.remove('opacity-0', '-translate-y-4', 'pointer-events-none');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', '-translate-y-4', 'pointer-events-none');
+      }, 3000);
     }
 
     // PIN Handlers
@@ -387,7 +441,7 @@
 
         if (matchesSearch) {
           const card = document.createElement('div');
-          card.className = "bg-brand-card p-3.5 rounded-xl border border-brand-border flex items-center justify-between";
+          card.className = "glass-card p-3.5 rounded-2xl flex items-center justify-between shadow-sm";
           
           card.innerHTML = `
             <div>
@@ -410,9 +464,18 @@
       document.getElementById('total-items').innerText = totalItemsCount;
     }
 
+    // RENDERN DES SELECT-MENÜS (OHNE PRE-SELECT)
     function renderQuickSelect() {
       const select = document.getElementById('quick-select');
       select.innerHTML = '';
+
+      // Standard-Platzhalter ohne Vorauswahl
+      const defaultOpt = document.createElement('option');
+      defaultOpt.value = "";
+      defaultOpt.textContent = " Bitte Getränk auswählen...";
+      defaultOpt.disabled = true;
+      defaultOpt.selected = true;
+      select.appendChild(defaultOpt);
 
       const itemsArray = Object.keys(inventoryData).map(ean => {
         const parsed = parseItem(inventoryData[ean]);
@@ -430,7 +493,7 @@
       itemsArray.forEach(item => {
         const opt = document.createElement('option');
         opt.value = item.ean;
-        opt.textContent = `${item.brand} - ${item.variety} (${item.volume}L) [Stock: ${item.stock}]`;
+        opt.textContent = `${item.brand} - ${item.variety} (${item.volume}L) [Bestand: ${item.stock}]`;
         select.appendChild(opt);
       });
     }
@@ -441,10 +504,14 @@
     }
 
     function executeBooking(direction) {
-      const ean = document.getElementById('quick-select').value;
+      const select = document.getElementById('quick-select');
+      const ean = select.value;
       const amountInput = parseInt(document.getElementById('booking-amount').value) || 1;
       
-      if (!ean || !inventoryData[ean]) return;
+      if (!ean || !inventoryData[ean]) {
+        alert("Bitte wähle zuerst ein Getränk aus!");
+        return;
+      }
 
       const delta = direction * amountInput;
       const parsed = parseItem(inventoryData[ean]);
@@ -458,11 +525,18 @@
         inventoryData[ean].stock = newStock;
       }
 
+      // Bestätigungsmeldung anzeigen
+      const isInput = direction > 0;
+      const titleStr = isInput ? "Eingang gebucht" : "Ausgang gebucht";
+      const msgStr = `${isInput ? '+' : '-'}${amountInput}x ${parsed.brand} ${parsed.variety}`;
+      showToast(titleStr, msgStr, isInput);
+
       renderInventory();
       renderQuickSelect();
       saveToCloud();
 
-      // Reset
+      // Formular zurücksetzen
+      select.value = "";
       document.getElementById('booking-amount').value = 1;
     }
 
@@ -489,6 +563,8 @@
       document.getElementById('new-variety').value = '';
       document.getElementById('new-volume').value = '';
 
+      showToast("Getränk angelegt", `${brand} ${variety} wurde neu erfasst`, true);
+
       renderInventory();
       renderQuickSelect();
       saveToCloud();
@@ -505,13 +581,13 @@
       if (tab === 'inventory') {
         invTab.classList.remove('hidden');
         quickTab.classList.add('hidden');
-        invBtn.className = "py-2 text-sm font-medium rounded-lg transition-all bg-brand-sky text-zinc-950 font-bold shadow-sm";
-        quickBtn.className = "py-2 text-sm font-medium rounded-lg transition-all text-zinc-400 hover:text-white";
+        invBtn.className = "py-2 text-sm font-medium rounded-xl transition-all bg-brand-sky text-zinc-950 font-bold shadow-sm shadow-sky-950/30";
+        quickBtn.className = "py-2 text-sm font-medium rounded-xl transition-all text-zinc-400 hover:text-white";
       } else {
         invTab.classList.add('hidden');
         quickTab.classList.remove('hidden');
-        quickBtn.className = "py-2 text-sm font-medium rounded-lg transition-all bg-brand-sky text-zinc-950 font-bold shadow-sm";
-        invBtn.className = "py-2 text-sm font-medium rounded-lg transition-all text-zinc-400 hover:text-white";
+        quickBtn.className = "py-2 text-sm font-medium rounded-xl transition-all bg-brand-sky text-zinc-950 font-bold shadow-sm shadow-sky-950/30";
+        invBtn.className = "py-2 text-sm font-medium rounded-xl transition-all text-zinc-400 hover:text-white";
       }
     }
   </script>
