@@ -144,7 +144,7 @@
       </button>
     </div>
 
-    <!-- TAB 1: REINER BESTAND (KEINE Direct-Buttons) -->
+    <!-- TAB 1: REINER BESTAND (KEINE Direct-Buttons & KEINE Null-Bestände) -->
     <div id="tab-inventory" class="space-y-4 flex-1">
       
       <!-- Dashboard Stats -->
@@ -238,6 +238,7 @@
   <script>
     // -------------------------------------------------------------
     // CONFIGURATION (JSONBin.io)
+    // Trage hier deine Keys von JSONBin.io ein:
     // -------------------------------------------------------------
     let CONFIG_BIN_ID = "6ad890beac6210605a4541a5";
     let CONFIG_MASTER_KEY = "$2a$10$.mIeRoeBg89gaf9lEZn0vuOSzzGr4se/Z98CNP0ANIP2zCRkZzTkG";
@@ -407,7 +408,7 @@
       }
     }
 
-    // Render Bestandsübersicht (REINE ANZEIGE)
+    // Render Bestandsübersicht (REINE ANZEIGE & NUR STOCK > 0)
     function renderInventory() {
       const container = document.getElementById('inventory-list');
       const searchQuery = document.getElementById('search-input').value.toLowerCase();
@@ -439,7 +440,8 @@
                               item.variety.toLowerCase().includes(searchQuery) ||
                               item.ean.toLowerCase().includes(searchQuery);
 
-        if (matchesSearch) {
+        // ZWEI BEDINGUNGEN: Suchtreffer UND Bestand > 0
+        if (matchesSearch && item.quantity > 0) {
           const card = document.createElement('div');
           card.className = "glass-card p-3.5 rounded-2xl flex items-center justify-between shadow-sm";
           
@@ -451,7 +453,7 @@
             </div>
             
             <div class="text-right">
-              <div class="text-xl font-extrabold ${item.quantity > 0 ? 'text-white' : 'text-zinc-600'}">
+              <div class="text-xl font-extrabold text-white">
                 ${item.quantity} <span class="text-xs font-normal text-zinc-500">Stk.</span>
               </div>
             </div>
@@ -464,7 +466,7 @@
       document.getElementById('total-items').innerText = totalItemsCount;
     }
 
-    // RENDERN DES SELECT-MENÜS (OHNE PRE-SELECT)
+    // RENDERN DES SELECT-MENÜS (ALLE ERFASSTEN GETRÄNKE, DARSTELLUNG [0])
     function renderQuickSelect() {
       const select = document.getElementById('quick-select');
       select.innerHTML = '';
@@ -493,7 +495,8 @@
       itemsArray.forEach(item => {
         const opt = document.createElement('option');
         opt.value = item.ean;
-        opt.textContent = `${item.brand} - ${item.variety} (${item.volume}L) [Bestand: ${item.stock}]`;
+        // Format geändert auf kurz und bündig: [0]
+        opt.textContent = `${item.brand} - ${item.variety} (${item.volume}L) [${item.stock}]`;
         select.appendChild(opt);
       });
     }
