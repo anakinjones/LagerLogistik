@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de" class="dark">
+<html lang="de" class="dark h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -16,13 +16,6 @@
                         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
                     },
                     colors: {
-                        deepsky: {
-                            400: '#38bdf8',
-                            500: '#00bfff', // Deep Sky Blue standard
-                            600: '#0284c7',
-                            700: '#0369a1',
-                            glow: 'rgba(0, 191, 255, 0.25)'
-                        },
                         brand: {
                             bg: '#09090b',       // Zinc-950
                             card: '#18181b',     // Zinc-900
@@ -66,7 +59,7 @@
             border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #00bfff;
+            background: #38bdf8;
         }
 
         /* Pin Input Animations */
@@ -74,37 +67,45 @@
             transition: all 0.2s ease-in-out;
         }
         .pin-dot.filled {
-            background-color: #00bfff;
-            box-shadow: 0 0 10px rgba(0, 191, 255, 0.6);
+            background-color: #38bdf8;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
             transform: scale(1.1);
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
     </style>
 </head>
-<body class="text-zinc-100 min-h-screen flex justify-center items-start sm:items-center bg-black font-sans antialiased selection:bg-deepsky-500 selection:text-black">
+<body class="text-zinc-100 min-h-screen flex justify-center items-start sm:items-center bg-black font-sans antialiased selection:bg-sky-500 selection:text-black">
 
     <!-- Haupt-Container simuliert iPhone 13 mini Display (Max 375px) -->
     <div class="w-full max-w-[375px] min-h-screen sm:min-h-[812px] sm:max-h-[812px] bg-brand-bg sm:border sm:border-brand-border sm:rounded-[40px] flex flex-col justify-between overflow-hidden relative shadow-2xl">
         
         <!-- ============================================================== -->
-        <!-- PIN LOCK SCREEN -->
+        <!-- PIN LOCK SCREEN (6-STELLIG) -->
         <!-- ============================================================== -->
         <div id="pinScreen" class="absolute inset-0 z-50 bg-brand-bg/98 backdrop-blur-xl flex flex-col justify-between p-6 safe-pt safe-pb">
-            <div class="text-center mt-8">
-                <div class="inline-flex p-4 rounded-full bg-deepsky-500/10 text-deepsky-500 mb-4 border border-deepsky-500/20 shadow-[0_0_15px_rgba(0,191,255,0.2)]">
-                    <i data-lucide="lock" class="w-8 h-8"></i>
+            <div class="text-center mt-6">
+                <div class="inline-flex p-3.5 rounded-full bg-sky-500/10 text-sky-400 mb-3 border border-sky-500/20 shadow-[0_0_15px_rgba(56,189,248,0.2)]">
+                    <i data-lucide="lock" class="w-7 h-7"></i>
                 </div>
                 <h1 class="text-xl font-bold text-white tracking-wide">Getränkelager</h1>
-                <p class="text-xs text-zinc-400 mt-1">Sicherheitscode eingeben</p>
+                <p class="text-xs text-sky-400/80 mt-1">6-stelligen PIN eingeben</p>
             </div>
 
-            <!-- PIN Punkte Anzeige -->
-            <div id="pin-dots" class="flex gap-3 mb-8">
-              <div class="pin-dot w-4 h-4 rounded-full border-2 border-slate-600 bg-transparent transition-all duration-200"></div>
-              <div class="pin-dot w-4 h-4 rounded-full border-2 border-slate-600 bg-transparent transition-all duration-200"></div>
-              <div class="pin-dot w-4 h-4 rounded-full border-2 border-slate-600 bg-transparent transition-all duration-200"></div>
-              <div class="pin-dot w-4 h-4 rounded-full border-2 border-slate-600 bg-transparent transition-all duration-200"></div>
-              <div class="pin-dot w-4 h-4 rounded-full border-2 border-slate-600 bg-transparent transition-all duration-200"></div>
-              <div class="pin-dot w-4 h-4 rounded-full border-2 border-slate-600 bg-transparent transition-all duration-200"></div>
+            <!-- PIN Punkte Anzeige (6 Stellen) -->
+            <div class="flex justify-center items-center space-x-3 my-4">
+                <div id="dot0" class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-zinc-700 bg-transparent"></div>
+                <div id="dot1" class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-zinc-700 bg-transparent"></div>
+                <div id="dot2" class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-zinc-700 bg-transparent"></div>
+                <div id="dot3" class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-zinc-700 bg-transparent"></div>
+                <div id="dot4" class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-zinc-700 bg-transparent"></div>
+                <div id="dot5" class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-zinc-700 bg-transparent"></div>
             </div>
 
             <div id="pinError" class="text-rose-500 text-xs text-center min-h-[16px] font-medium transition-opacity opacity-0">
@@ -113,47 +114,47 @@
 
             <!-- Ziffernblock -->
             <div class="grid grid-cols-3 gap-3 my-auto max-w-[280px] mx-auto">
-                <button onclick="pressPin('1')" class="h-16 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-deepsky-500/50 active:bg-deepsky-500/20 active:text-deepsky-500 transition-all flex items-center justify-center">1</button>
-                <button onclick="pressPin('2')" class="h-16 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-deepsky-500/50 active:bg-deepsky-500/20 active:text-deepsky-500 transition-all flex items-center justify-center">2</button>
-                <button onclick="pressPin('3')" class="h-16 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-deepsky-500/50 active:bg-deepsky-500/20 active:text-deepsky-500 transition-all flex items-center justify-center">3</button>
-                <button onclick="pressPin('4')" class="h-16 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-deepsky-500/50 active:bg-deepsky-500/20 active:text-deepsky-500 transition-all flex items-center justify-center">4</button>
-                <button onclick="pressPin('5')" class="h-16 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-deepsky-500/50 active:bg-deepsky-500/20 active:text-deepsky-500 transition-all flex items-center justify-center">5</button>
-                <button onclick="pressPin('6')" class="h-16 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-deepsky-500/50 active:bg-deepsky-500/20 active:text-deepsky-500 transition-all flex items-center justify-center">6</button>
-                <button onclick="pressPin('7')" class="h-16 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-deepsky-500/50 active:bg-deepsky-500/20 active:text-deepsky-500 transition-all flex items-center justify-center">7</button>
-                <button onclick="pressPin('8')" class="h-16 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-deepsky-500/50 active:bg-deepsky-500/20 active:text-deepsky-500 transition-all flex items-center justify-center">8</button>
-                <button onclick="pressPin('9')" class="h-16 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-deepsky-500/50 active:bg-deepsky-500/20 active:text-deepsky-500 transition-all flex items-center justify-center">9</button>
-                <button onclick="clearPin()" class="h-16 rounded-2xl bg-brand-card border border-brand-border text-xs text-zinc-400 font-medium hover:text-white active:bg-zinc-800 transition-all flex items-center justify-center">Löschen</button>
-                <button onclick="pressPin('0')" class="h-16 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-deepsky-500/50 active:bg-deepsky-500/20 active:text-deepsky-500 transition-all flex items-center justify-center">0</button>
-                <button onclick="deletePinDigit()" class="h-16 rounded-2xl bg-brand-card border border-brand-border text-zinc-400 hover:text-white active:bg-zinc-800 transition-all flex items-center justify-center">
-                    <i data-lucide="delete" class="w-6 h-6"></i>
+                <button onclick="pressPin('1')" class="h-14 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-sky-500/50 active:bg-sky-500/20 active:text-sky-400 transition-all flex items-center justify-center">1</button>
+                <button onclick="pressPin('2')" class="h-14 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-sky-500/50 active:bg-sky-500/20 active:text-sky-400 transition-all flex items-center justify-center">2</button>
+                <button onclick="pressPin('3')" class="h-14 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-sky-500/50 active:bg-sky-500/20 active:text-sky-400 transition-all flex items-center justify-center">3</button>
+                <button onclick="pressPin('4')" class="h-14 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-sky-500/50 active:bg-sky-500/20 active:text-sky-400 transition-all flex items-center justify-center">4</button>
+                <button onclick="pressPin('5')" class="h-14 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-sky-500/50 active:bg-sky-500/20 active:text-sky-400 transition-all flex items-center justify-center">5</button>
+                <button onclick="pressPin('6')" class="h-14 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-sky-500/50 active:bg-sky-500/20 active:text-sky-400 transition-all flex items-center justify-center">6</button>
+                <button onclick="pressPin('7')" class="h-14 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-sky-500/50 active:bg-sky-500/20 active:text-sky-400 transition-all flex items-center justify-center">7</button>
+                <button onclick="pressPin('8')" class="h-14 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-sky-500/50 active:bg-sky-500/20 active:text-sky-400 transition-all flex items-center justify-center">8</button>
+                <button onclick="pressPin('9')" class="h-14 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-sky-500/50 active:bg-sky-500/20 active:text-sky-400 transition-all flex items-center justify-center">9</button>
+                <button onclick="clearPin()" class="h-14 rounded-2xl bg-brand-card border border-brand-border text-xs text-zinc-400 font-medium hover:text-white active:bg-zinc-800 transition-all flex items-center justify-center">Löschen</button>
+                <button onclick="pressPin('0')" class="h-14 rounded-2xl bg-brand-card border border-brand-border text-xl font-semibold hover:border-sky-500/50 active:bg-sky-500/20 active:text-sky-400 transition-all flex items-center justify-center">0</button>
+                <button onclick="deletePinDigit()" class="h-14 rounded-2xl bg-brand-card border border-brand-border text-zinc-400 hover:text-white active:bg-zinc-800 transition-all flex items-center justify-center">
+                    <i data-lucide="delete" class="w-5 h-5"></i>
                 </button>
             </div>
             
-            <div class="text-center text-[10px] text-zinc-600 mt-2">
-                Getränkelager v2.0 • Safe Mobile App
+            <div class="text-center text-[10px] text-zinc-600 mt-1">
+                Getränkelager v2.5 • Deep Sky Blue Edition
             </div>
         </div>
 
         <!-- ============================================================== -->
         <!-- HEADER -->
         <!-- ============================================================== -->
-        <header class="px-5 pt-5 pb-3 border-b border-brand-border bg-brand-card/50 backdrop-blur-md flex items-center justify-between safe-pt sticky top-0 z-20">
+        <header class="px-4 pt-4 pb-3 border-b border-brand-border bg-brand-card/60 backdrop-blur-md flex items-center justify-between safe-pt sticky top-0 z-20">
             <div class="flex items-center space-x-2.5">
-                <div class="p-2 rounded-xl bg-deepsky-500/10 border border-deepsky-500/30 text-deepsky-500">
+                <div class="p-2 rounded-xl bg-sky-500/10 border border-sky-500/30 text-sky-400">
                     <i data-lucide="wine" class="w-5 h-5"></i>
                 </div>
                 <div>
                     <h1 class="font-bold text-sm text-white tracking-wide leading-tight">Getränkelager</h1>
-                    <span id="syncStatus" class="text-[10px] text-zinc-400 flex items-center gap-1">
+                    <span id="syncStatus" class="text-[10px] text-sky-400/80 flex items-center gap-1">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Bereit
                     </span>
                 </div>
             </div>
             <div class="flex items-center space-x-1.5">
-                <button onclick="syncData()" title="Synchronisieren" class="p-2.5 rounded-xl bg-brand-card border border-brand-border text-zinc-300 hover:text-deepsky-500 hover:border-deepsky-500/40 active:scale-95 transition-all">
+                <button onclick="syncData()" title="Synchronisieren" class="p-2.5 rounded-xl bg-brand-card border border-brand-border text-sky-400 hover:border-sky-500/40 active:scale-95 transition-all">
                     <i data-lucide="refresh-cw" id="syncIcon" class="w-4 h-4"></i>
                 </button>
-                <button onclick="openSettings()" title="Einstellungen" class="p-2.5 rounded-xl bg-brand-card border border-brand-border text-zinc-300 hover:text-deepsky-500 hover:border-deepsky-500/40 active:scale-95 transition-all">
+                <button onclick="openSettings()" title="Einstellungen" class="p-2.5 rounded-xl bg-brand-card border border-brand-border text-sky-400 hover:border-sky-500/40 active:scale-95 transition-all">
                     <i data-lucide="settings" class="w-4 h-4"></i>
                 </button>
             </div>
@@ -162,16 +163,16 @@
         <!-- ============================================================== -->
         <!-- MAIN CONTENT AREA -->
         <!-- ============================================================== -->
-        <main class="flex-1 overflow-y-auto p-4 space-y-4">
+        <main class="flex-1 overflow-y-auto p-3.5 space-y-3.5">
             
             <!-- TAB 1: BUCHEN -->
-            <section id="tab-buchen" class="space-y-4">
+            <section id="tab-buchen" class="space-y-3.5">
                 
-                <!-- Schnellauswahl Karussell / Grid -->
-                <div class="bg-brand-card border border-brand-border rounded-2xl p-3.5 shadow-lg">
-                    <div class="flex justify-between items-center mb-2.5">
-                        <span class="text-xs font-semibold text-deepsky-400 flex items-center gap-1.5 tracking-wide">
-                            <i data-lucide="zap" class="w-3.5 h-3.5"></i> Schnellauswahl (A-Z Marken)
+                <!-- Schnellauswahl Karussell -->
+                <div class="bg-brand-card border border-brand-border rounded-2xl p-3 shadow-lg">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-semibold text-sky-400 flex items-center gap-1.5 tracking-wide">
+                            <i data-lucide="zap" class="w-3.5 h-3.5"></i> Schnellauswahl (A-Z)
                         </span>
                         <span class="text-[10px] text-zinc-400" id="quickSelectCount">0 Artikel</span>
                     </div>
@@ -179,20 +180,20 @@
                     <!-- Alphabtisch sortierte Schnellauswahl-Buttons -->
                     <div id="quickSelectContainer" class="flex gap-2 overflow-x-auto pb-1 pt-1 -mx-1 px-1 no-scrollbar">
                         <!-- Dynamisch befüllt via JS -->
-                        <div class="text-xs text-zinc-400 py-2">Keine Artikel erfasst</div>
+                        <div class="text-xs text-zinc-500 py-1">Keine Artikel erfasst</div>
                     </div>
                 </div>
 
                 <!-- Buchungs-Formular -->
-                <div class="bg-brand-card border border-brand-border rounded-2xl p-4 shadow-lg space-y-3.5">
+                <div class="bg-brand-card border border-brand-border rounded-2xl p-3.5 shadow-lg space-y-3">
                     <div class="flex justify-between items-center pb-2 border-b border-brand-border">
-                        <h2 class="text-sm font-semibold text-zinc-200">Warenbuchung</h2>
+                        <h2 class="text-xs font-semibold text-zinc-200 uppercase tracking-wider">Warenbuchung</h2>
                         <span id="articleStatusBadge" class="hidden px-2 py-0.5 text-[10px] rounded-full font-medium"></span>
                     </div>
 
                     <!-- Art-Wahl (Eingang / Ausgang) -->
                     <div class="grid grid-cols-2 gap-2 p-1 bg-brand-bg rounded-xl border border-brand-border">
-                        <button type="button" id="typeInBtn" onclick="setBookingType('IN')" class="py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all bg-deepsky-500 text-black shadow-md">
+                        <button type="button" id="typeInBtn" onclick="setBookingType('IN')" class="py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all bg-sky-500 text-black shadow-md">
                             <i data-lucide="arrow-down-left" class="w-4 h-4"></i> Eingang (+)
                         </button>
                         <button type="button" id="typeOutBtn" onclick="setBookingType('OUT')" class="py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all text-zinc-400 hover:text-white">
@@ -202,73 +203,71 @@
 
                     <!-- Artikelnummer / ID -->
                     <div>
-                        <label class="block text-[11px] font-medium text-zinc-400 mb-1">Artikel-ID / Barcode</label>
+                        <label class="block text-[11px] font-medium text-sky-400 mb-1">Artikel-Nummer / ID</label>
                         <div class="relative">
-                            <input type="text" id="inputArtNr" oninput="onArtNrChange()" placeholder="z.B. 101 oder EAN" class="w-full bg-brand-bg border border-brand-border rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-deepsky-500 focus:ring-1 focus:ring-deepsky-500 transition-all pl-9">
-                            <i data-lucide="barcode" class="w-4 h-4 absolute left-3 top-3 text-zinc-500"></i>
+                            <input type="text" id="inputArtNr" oninput="onArtNrChange()" placeholder="z.B. 101" class="w-full bg-brand-bg border border-brand-border rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all pl-9">
+                            <i data-lucide="barcode" class="w-4 h-4 absolute left-3 top-2.5 text-zinc-500"></i>
                         </div>
                     </div>
 
                     <!-- Zusatzfelder bei NEUEM Artikel -->
-                    <div id="newArticleFields" class="space-y-3 pt-1 hidden transition-all border-t border-dashed border-brand-border">
-                        <div class="bg-deepsky-500/10 border border-deepsky-500/20 rounded-xl p-2.5 text-xs text-deepsky-400 flex items-center gap-2">
+                    <div id="newArticleFields" class="space-y-2.5 pt-1 hidden transition-all border-t border-dashed border-brand-border">
+                        <div class="bg-sky-500/10 border border-sky-500/20 rounded-xl p-2 text-xs text-sky-400 flex items-center gap-2">
                             <i data-lucide="info" class="w-4 h-4 shrink-0"></i>
-                            <span>Neuer Artikel! Bitte Stammdaten ergänzen.</span>
+                            <span>Erster Eintrag! Bitte Daten ergänzen:</span>
                         </div>
 
                         <div>
-                            <label class="block text-[11px] font-medium text-zinc-400 mb-1">Marke *</label>
-                            <input type="text" id="inputMarke" placeholder="z.B. Coca-Cola, Paulaner" class="w-full bg-brand-bg border border-brand-border rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-deepsky-500 transition-all">
+                            <label class="block text-[11px] font-medium text-sky-400 mb-1">Marke *</label>
+                            <input type="text" id="inputMarke" placeholder="z.B. Coca-Cola, Celo" class="w-full bg-brand-bg border border-brand-border rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500 transition-all">
                         </div>
 
                         <div class="grid grid-cols-2 gap-2">
                             <div>
-                                <label class="block text-[11px] font-medium text-zinc-400 mb-1">Sorte *</label>
-                                <input type="text" id="inputSorte" placeholder="z.B. Zero, Spezi" class="w-full bg-brand-bg border border-brand-border rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-deepsky-500 transition-all">
+                                <label class="block text-[11px] font-medium text-sky-400 mb-1">Sorte *</label>
+                                <input type="text" id="inputSorte" placeholder="z.B. Pils, Zero" class="w-full bg-brand-bg border border-brand-border rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500 transition-all">
                             </div>
                             <div>
-                                <label class="block text-[11px] font-medium text-zinc-400 mb-1">Liter pro Fl. *</label>
-                                <input type="number" step="0.01" id="inputLiter" placeholder="z.B. 0.5 oder 0.33" class="w-full bg-brand-bg border border-brand-border rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-deepsky-500 transition-all">
+                                <label class="block text-[11px] font-medium text-sky-400 mb-1">Füllmenge (L) *</label>
+                                <input type="number" step="0.01" id="inputLiter" placeholder="z.B. 0.5" class="w-full bg-brand-bg border border-brand-border rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500 transition-all">
                             </div>
                         </div>
                     </div>
 
                     <!-- Menge -->
                     <div>
-                        <label class="block text-[11px] font-medium text-zinc-400 mb-1">Anzahl (Flaschen / Kästen)</label>
+                        <label class="block text-[11px] font-medium text-sky-400 mb-1">Anzahl</label>
                         <div class="flex items-center gap-2">
-                            <button type="button" onclick="adjustAmount(-1)" class="w-11 h-11 bg-brand-bg border border-brand-border rounded-xl flex items-center justify-center text-zinc-300 active:bg-zinc-800 text-lg font-bold">-</button>
-                            <input type="number" id="inputMenge" value="1" min="1" class="flex-1 bg-brand-bg border border-brand-border rounded-xl py-2.5 text-center text-base font-bold text-white focus:outline-none focus:border-deepsky-500">
-                            <button type="button" onclick="adjustAmount(1)" class="w-11 h-11 bg-brand-bg border border-brand-border rounded-xl flex items-center justify-center text-zinc-300 active:bg-zinc-800 text-lg font-bold">+</button>
+                            <button type="button" onclick="adjustAmount(-1)" class="w-10 h-10 bg-brand-bg border border-brand-border rounded-xl flex items-center justify-center text-sky-400 active:bg-zinc-800 text-lg font-bold">-</button>
+                            <input type="number" id="inputMenge" value="1" min="1" class="flex-1 bg-brand-bg border border-brand-border rounded-xl py-2 text-center text-base font-bold text-white focus:outline-none focus:border-sky-500">
+                            <button type="button" onclick="adjustAmount(1)" class="w-10 h-10 bg-brand-bg border border-brand-border rounded-xl flex items-center justify-center text-sky-400 active:bg-zinc-800 text-lg font-bold">+</button>
                         </div>
                     </div>
 
                     <!-- Absenden Button -->
-                    <button type="button" onclick="executeBooking()" class="w-full py-3 mt-2 rounded-xl bg-deepsky-500 hover:bg-deepsky-600 active:bg-deepsky-700 text-black font-bold text-sm tracking-wide shadow-[0_0_20px_rgba(0,191,255,0.3)] transition-all flex items-center justify-center gap-2">
-                        <i data-lucide="check-circle" class="w-5 h-5"></i> Buchung Durchführen
+                    <button type="button" onclick="executeBooking()" class="w-full py-2.5 mt-1 rounded-xl bg-sky-500 hover:bg-sky-400 active:bg-sky-600 text-black font-bold text-sm tracking-wide shadow-[0_0_15px_rgba(56,189,248,0.3)] transition-all flex items-center justify-center gap-2">
+                        <i data-lucide="check-circle" class="w-4 h-4"></i> Buchung ausführen
                     </button>
                 </div>
             </section>
 
             <!-- TAB 2: BESTAND -->
             <section id="tab-bestand" class="space-y-3 hidden">
-                <!-- Suchleiste & Zusammenfassung -->
-                <div class="flex gap-2">
-                    <div class="relative flex-1">
-                        <input type="text" id="searchStock" oninput="renderStock()" placeholder="Bestand durchsuchen..." class="w-full bg-brand-card border border-brand-border rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-deepsky-500 pl-8">
-                        <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-3 text-zinc-500"></i>
-                    </div>
+                <!-- Suchleiste -->
+                <div class="relative">
+                    <input type="text" id="searchStock" oninput="renderStock()" placeholder="Bestand durchsuchen..." class="w-full bg-brand-card border border-brand-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500 pl-8">
+                    <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-zinc-500"></i>
                 </div>
 
-                <!-- Gesamt-Statistik Mini Banner -->
+                <!-- Gesamtliter Banner -->
                 <div class="grid grid-cols-2 gap-2">
-                    <div class="bg-brand-card border border-brand-border rounded-xl p-2.5 text-center">
+                    <div class="bg-brand-card border border-brand-border rounded-xl p-2 text-center">
                         <span class="text-[10px] text-zinc-400 block">Gesamt Flaschen</span>
-                        <span id="statTotalItems" class="text-sm font-bold text-deepsky-400">0 Stk.</span>
+                        <span id="statTotalItems" class="text-xs font-bold text-sky-400">0 Stk.</span>
                     </div>
-                    <div class="bg-brand-card border border-brand-border rounded-xl p-2.5 text-center">
-                        <span class="text-[10px] text-zinc-400 block">Gesamt Volume</span>
-                        <span id="statTotalLiters" class="text-sm font-bold text-deepsky-400">0.00 L</span>
+                    <div class="bg-brand-card border border-brand-border rounded-xl p-2 text-center">
+                        <span class="text-[10px] text-zinc-400 block">Gesamtliter Bestand</span>
+                        <span id="statTotalLiters" class="text-xs font-bold text-sky-400">0.00 L</span>
                     </div>
                 </div>
 
@@ -284,12 +283,12 @@
         <!-- NAVIGATION BAR (BOTTOM) -->
         <!-- ============================================================== -->
         <nav class="bg-brand-card/90 backdrop-blur-md border-t border-brand-border p-2 safe-pb grid grid-cols-2 gap-2 sticky bottom-0 z-20">
-            <button id="navBtnBuchen" onclick="switchTab('buchen')" class="py-2.5 rounded-xl flex flex-col items-center justify-center transition-all bg-deepsky-500/10 text-deepsky-500 border border-deepsky-500/30">
-                <i data-lucide="plus-circle" class="w-5 h-5 mb-0.5"></i>
+            <button id="navBtnBuchen" onclick="switchTab('buchen')" class="py-2 rounded-xl flex flex-col items-center justify-center transition-all bg-sky-500/10 text-sky-400 border border-sky-500/30">
+                <i data-lucide="plus-circle" class="w-4 h-4 mb-0.5"></i>
                 <span class="text-[11px] font-semibold">Buchen</span>
             </button>
-            <button id="navBtnBestand" onclick="switchTab('bestand')" class="py-2.5 rounded-xl flex flex-col items-center justify-center transition-all text-zinc-400 hover:text-zinc-200 border border-transparent">
-                <i data-lucide="boxes" class="w-5 h-5 mb-0.5"></i>
+            <button id="navBtnBestand" onclick="switchTab('bestand')" class="py-2 rounded-xl flex flex-col items-center justify-center transition-all text-zinc-400 hover:text-zinc-200 border border-transparent">
+                <i data-lucide="boxes" class="w-4 h-4 mb-0.5"></i>
                 <span class="text-[11px] font-semibold">Bestand</span>
             </button>
         </nav>
@@ -301,41 +300,41 @@
             <div class="bg-brand-card border border-brand-border rounded-2xl w-full max-w-[340px] p-4 space-y-4 max-h-[90vh] overflow-y-auto">
                 <div class="flex justify-between items-center border-b border-brand-border pb-2">
                     <h3 class="font-bold text-sm text-white flex items-center gap-2">
-                        <i data-lucide="sliders" class="w-4 h-4 text-deepsky-500"></i> Einstellungen
+                        <i data-lucide="sliders" class="w-4 h-4 text-sky-400"></i> Einstellungen
                     </h3>
                     <button onclick="closeSettings()" class="text-zinc-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
                 </div>
 
                 <!-- JSONBin.io Config -->
-                <div class="space-y-2.5">
-                    <h4 class="text-xs font-semibold text-deepsky-400 uppercase tracking-wider">JSONBin.io Sync</h4>
+                <div class="space-y-2">
+                    <h4 class="text-xs font-semibold text-sky-400 uppercase tracking-wider">JSONBin.io Sync</h4>
                     <div>
                         <label class="block text-[10px] text-zinc-400 mb-1">Bin ID</label>
-                        <input type="text" id="cfgBinId" class="w-full bg-brand-bg border border-brand-border rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-deepsky-500">
+                        <input type="text" id="cfgBinId" class="w-full bg-brand-bg border border-brand-border rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-sky-500">
                     </div>
                     <div>
                         <label class="block text-[10px] text-zinc-400 mb-1">Master Key</label>
-                        <input type="password" id="cfgMasterKey" class="w-full bg-brand-bg border border-brand-border rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-deepsky-500">
+                        <input type="password" id="cfgMasterKey" class="w-full bg-brand-bg border border-brand-border rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-sky-500">
                     </div>
                 </div>
 
                 <!-- PIN Ändern -->
                 <div class="space-y-2 border-t border-brand-border pt-3">
-                    <h4 class="text-xs font-semibold text-deepsky-400 uppercase tracking-wider">Sicherheit</h4>
+                    <h4 class="text-xs font-semibold text-sky-400 uppercase tracking-wider">Sicherheit</h4>
                     <div>
-                        <label class="block text-[10px] text-zinc-400 mb-1">App PIN (4 Stellen)</label>
-                        <input type="text" id="cfgPin" maxlength="4" class="w-full bg-brand-bg border border-brand-border rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-deepsky-500">
+                        <label class="block text-[10px] text-zinc-400 mb-1">App PIN (6 Stellen)</label>
+                        <input type="text" id="cfgPin" maxlength="6" class="w-full bg-brand-bg border border-brand-border rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-sky-500">
                     </div>
                 </div>
 
                 <!-- Data Backup / Restore -->
                 <div class="space-y-2 border-t border-brand-border pt-3">
-                    <h4 class="text-xs font-semibold text-deepsky-400 uppercase tracking-wider">Datensicherung</h4>
+                    <h4 class="text-xs font-semibold text-sky-400 uppercase tracking-wider">Datensicherung</h4>
                     <div class="grid grid-cols-2 gap-2">
-                        <button onclick="exportJSON()" class="py-2 bg-brand-bg border border-brand-border rounded-lg text-xs font-medium hover:border-deepsky-500 text-zinc-200 flex items-center justify-center gap-1">
+                        <button onclick="exportJSON()" class="py-2 bg-brand-bg border border-brand-border rounded-lg text-xs font-medium hover:border-sky-500 text-zinc-200 flex items-center justify-center gap-1">
                             <i data-lucide="download" class="w-3.5 h-3.5"></i> Export
                         </button>
-                        <button onclick="triggerImport()" class="py-2 bg-brand-bg border border-brand-border rounded-lg text-xs font-medium hover:border-deepsky-500 text-zinc-200 flex items-center justify-center gap-1">
+                        <button onclick="triggerImport()" class="py-2 bg-brand-bg border border-brand-border rounded-lg text-xs font-medium hover:border-sky-500 text-zinc-200 flex items-center justify-center gap-1">
                             <i data-lucide="upload" class="w-3.5 h-3.5"></i> Import
                         </button>
                         <input type="file" id="importFileInput" onchange="importJSON(event)" accept=".json" class="hidden">
@@ -344,15 +343,15 @@
 
                 <!-- Save Buttons -->
                 <div class="pt-2 border-t border-brand-border flex gap-2">
-                    <button onclick="saveSettings()" class="flex-1 py-2.5 bg-deepsky-500 text-black font-bold text-xs rounded-xl shadow-lg hover:bg-deepsky-400">Speichern</button>
-                    <button onclick="closeSettings()" class="py-2.5 px-4 bg-brand-bg border border-brand-border text-xs rounded-xl text-zinc-300">Abbrechen</button>
+                    <button onclick="saveSettings()" class="flex-1 py-2 bg-sky-500 text-black font-bold text-xs rounded-xl shadow-lg hover:bg-sky-400">Speichern</button>
+                    <button onclick="closeSettings()" class="py-2 px-3 bg-brand-bg border border-brand-border text-xs rounded-xl text-zinc-300">Abbrechen</button>
                 </div>
             </div>
         </div>
 
         <!-- Toast Notification -->
-        <div id="toast" class="absolute top-16 left-1/2 -translate-x-1/2 z-50 bg-zinc-800 text-white border border-deepsky-500/50 px-4 py-2 rounded-full text-xs font-medium shadow-2xl transition-all duration-300 opacity-0 pointer-events-none flex items-center gap-2">
-            <i data-lucide="info" class="w-4 h-4 text-deepsky-500"></i>
+        <div id="toast" class="absolute top-14 left-1/2 -translate-x-1/2 z-50 bg-zinc-900 text-white border border-sky-500/50 px-3.5 py-1.5 rounded-full text-xs font-medium shadow-2xl transition-all duration-300 opacity-0 pointer-events-none flex items-center gap-2">
+            <i data-lucide="info" class="w-3.5 h-3.5 text-sky-400"></i>
             <span id="toastMsg">Benachrichtigung</span>
         </div>
 
@@ -363,24 +362,23 @@
     <!-- ============================================================== -->
     <script>
         // =================================================================
-        // CONFIGURATION & ZUGANGSDATEN (LEICHT ZU FINDEN)
+        // CONFIGURATION & ZUGANGSDATEN (JSONBin.io)
         // =================================================================
         let CONFIG_BIN_ID = "6ad890beac6210605a4541a5";
         let CONFIG_MASTER_KEY = "$2a$10$.mIeRoeBg89gaf9lEZn0vuOSzzGr4se/Z98CNP0ANIP2zCRkZzTkG";
-        let APP_PIN = "123456";
+        let APP_PIN = "070807"; // 6-stelliger PIN
 
         // APP STATE
         let currentPinInput = "";
         let currentBookingType = "IN"; // "IN" oder "OUT"
-        let inventory = {}; // Structure: { "101": { id: "101", marke: "Coca-Cola", sorte: "Zero", liter: 0.5, menge: 24 } }
+        let inventory = {};
 
-        // SAMPLE DEMO DATA (falls noch leer)
+        // DEMO BEISPIELDATEN (Falls Bin noch leer ist)
         const sampleItems = {
             "101": { id: "101", marke: "Coca-Cola", sorte: "Zero", liter: 0.5, menge: 24 },
             "102": { id: "102", marke: "Paulaner", sorte: "Spezi", liter: 0.5, menge: 40 },
             "103": { id: "103", marke: "Augustiner", sorte: "Helles", liter: 0.5, menge: 12 },
-            "104": { id: "104", marke: "Red Bull", sorte: "Classic", liter: 0.25, menge: 18 },
-            "105": { id: "105", marke: "Adelholzener", sorte: "Mineralwasser", liter: 0.7, menge: 30 }
+            "104": { id: "104", marke: "Celo", sorte: "Pils", liter: 0.33, menge: 0 }
         };
 
         // =================================================================
@@ -401,14 +399,13 @@
             if (savedKey) CONFIG_MASTER_KEY = savedKey;
             if (savedPin) APP_PIN = savedPin;
 
-            // Fill settings fields
             document.getElementById("cfgBinId").value = CONFIG_BIN_ID;
             document.getElementById("cfgMasterKey").value = CONFIG_MASTER_KEY;
             document.getElementById("cfgPin").value = APP_PIN;
         }
 
         // =================================================================
-        // PIN LOCK SCHUTZ
+        // PIN LOCK SCHUTZ (6 STELLEN)
         // =================================================================
         function pressPin(digit) {
             if (currentPinInput.length < 6) {
@@ -433,12 +430,14 @@
         }
 
         function updatePinDots() {
-            for (let i = 0; i < 4; i++) {
+            for (let i = 0; i < 6; i++) {
                 const dot = document.getElementById(`dot${i}`);
-                if (i < currentPinInput.length) {
-                    dot.classList.add("filled");
-                } else {
-                    dot.classList.remove("filled");
+                if (dot) {
+                    if (i < currentPinInput.length) {
+                        dot.classList.add("filled");
+                    } else {
+                        dot.classList.remove("filled");
+                    }
                 }
             }
         }
@@ -458,7 +457,7 @@
         }
 
         // =================================================================
-        // TABS & NAV
+        // TABS & NAVIGATION
         // =================================================================
         function switchTab(tabName) {
             const tabBuchen = document.getElementById("tab-buchen");
@@ -470,21 +469,21 @@
                 tabBuchen.classList.remove("hidden");
                 tabBestand.classList.add("hidden");
                 
-                navBuchen.className = "py-2.5 rounded-xl flex flex-col items-center justify-center transition-all bg-deepsky-500/10 text-deepsky-500 border border-deepsky-500/30";
-                navBestand.className = "py-2.5 rounded-xl flex flex-col items-center justify-center transition-all text-zinc-400 hover:text-zinc-200 border border-transparent";
+                navBuchen.className = "py-2 rounded-xl flex flex-col items-center justify-center transition-all bg-sky-500/10 text-sky-400 border border-sky-500/30";
+                navBestand.className = "py-2 rounded-xl flex flex-col items-center justify-center transition-all text-zinc-400 hover:text-zinc-200 border border-transparent";
             } else {
                 tabBuchen.classList.add("hidden");
                 tabBestand.classList.remove("hidden");
 
-                navBestand.className = "py-2.5 rounded-xl flex flex-col items-center justify-center transition-all bg-deepsky-500/10 text-deepsky-500 border border-deepsky-500/30";
-                navBuchen.className = "py-2.5 rounded-xl flex flex-col items-center justify-center transition-all text-zinc-400 hover:text-zinc-200 border border-transparent";
+                navBestand.className = "py-2 rounded-xl flex flex-col items-center justify-center transition-all bg-sky-500/10 text-sky-400 border border-sky-500/30";
+                navBuchen.className = "py-2 rounded-xl flex flex-col items-center justify-center transition-all text-zinc-400 hover:text-zinc-200 border border-transparent";
                 
                 renderStock();
             }
         }
 
         // =================================================================
-        // BUCHUNGSLOGIK & FORMULAR
+        // BUCHUNGSLOGIK
         // =================================================================
         function setBookingType(type) {
             currentBookingType = type;
@@ -492,7 +491,7 @@
             const outBtn = document.getElementById("typeOutBtn");
 
             if (type === 'IN') {
-                inBtn.className = "py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all bg-deepsky-500 text-black shadow-md";
+                inBtn.className = "py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all bg-sky-500 text-black shadow-md";
                 outBtn.className = "py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all text-zinc-400 hover:text-white";
             } else {
                 outBtn.className = "py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all bg-rose-500 text-white shadow-md";
@@ -522,15 +521,15 @@
             if (inventory[id]) {
                 // Bekannter Artikel
                 newFields.classList.add("hidden");
-                badge.classList.remove("hidden", "bg-emerald-500/10", "text-emerald-400", "border-emerald-500/20");
-                badge.classList.add("bg-deepsky-500/10", "text-deepsky-400", "border", "border-deepsky-500/20");
+                badge.classList.remove("hidden", "bg-amber-500/10", "text-amber-400", "border-amber-500/20");
+                badge.classList.add("bg-sky-500/10", "text-sky-400", "border", "border-sky-500/20");
                 badge.textContent = `${inventory[id].marke} ${inventory[id].sorte} (${inventory[id].menge} Stk.)`;
             } else {
                 // Neuer Artikel
                 newFields.classList.remove("hidden");
-                badge.classList.remove("hidden", "bg-deepsky-500/10", "text-deepsky-400", "border-deepsky-500/20");
+                badge.classList.remove("hidden", "bg-sky-500/10", "text-sky-400", "border-sky-500/20");
                 badge.classList.add("bg-amber-500/10", "text-amber-400", "border", "border-amber-500/20");
-                badge.textContent = "Neu";
+                badge.textContent = "Neuer Artikel";
             }
         }
 
@@ -545,7 +544,7 @@
             const menge = parseInt(document.getElementById("inputMenge").value) || 0;
 
             if (!id) {
-                showToast("Bitte Artikel-ID eingeben");
+                showToast("Bitte Artikel-Nummer eingeben");
                 return;
             }
 
@@ -560,19 +559,19 @@
                     inventory[id].menge += menge;
                 } else {
                     if (inventory[id].menge < menge) {
-                        showToast("Warnung: Bestand wird negativ!");
+                        showToast("Achtung: Bestand unterschreitet 0");
                     }
                     inventory[id].menge -= menge;
                     if (inventory[id].menge < 0) inventory[id].menge = 0;
                 }
             } else {
-                // Neuer Artikel
+                // Erster Eintrag
                 const marke = document.getElementById("inputMarke").value.trim();
                 const sorte = document.getElementById("inputSorte").value.trim();
                 const liter = parseFloat(document.getElementById("inputLiter").value) || 0;
 
                 if (!marke || !sorte || liter <= 0) {
-                    showToast("Bitte Marke, Sorte & Liter korrekt ausfüllen");
+                    showToast("Marke, Sorte & Füllmenge eingeben");
                     return;
                 }
 
@@ -585,7 +584,7 @@
                 };
             }
 
-            // Formular zurücksetzen & GUI aktualisieren
+            // Reset
             document.getElementById("inputArtNr").value = "";
             document.getElementById("inputMarke").value = "";
             document.getElementById("inputSorte").value = "";
@@ -593,24 +592,24 @@
             document.getElementById("inputMenge").value = "1";
             onArtNrChange();
 
-            showToast("Buchung erfolgreich gespeichert");
+            showToast("Buchung gespeichert");
             saveInventoryData();
         }
 
         // =================================================================
         // SCHNELLAUSWAHL (ALPHABETISCH NACH MARKE)
+        // Format: "Erste 3 Buchstaben der Marke + Sorte" (z.B. "CEL - Pils")
         // =================================================================
         function renderQuickSelect() {
             const container = document.getElementById("quickSelectContainer");
             const countBadge = document.getElementById("quickSelectCount");
 
-            // Artikel in Array umwandeln und ALPHABETISCH NACH MARKE SORTIEREN
+            // Artikel alphabetisch nach Marke sortieren
             const items = Object.values(inventory).sort((a, b) => {
                 const markeA = (a.marke || "").toLowerCase();
                 const markeB = (b.marke || "").toLowerCase();
                 if (markeA < markeB) return -1;
                 if (markeA > markeB) return 1;
-                // Bei gleicher Marke nach Sorte sortieren
                 return (a.sorte || "").localeCompare(b.sorte || "");
             });
 
@@ -622,14 +621,13 @@
             }
 
             container.innerHTML = items.map(item => {
-                // Format: Erste drei Buchstaben der Marke + Sorte (z.B. "COK - Zero")
                 const markePrefix = (item.marke || "UNK").substring(0, 3).toUpperCase();
                 const label = `${markePrefix} - ${item.sorte}`;
 
                 return `
                     <button type="button" onclick="selectQuickArticle('${item.id}')" 
-                        class="shrink-0 px-3 py-2 bg-brand-bg border border-deepsky-500/40 hover:border-deepsky-500 active:bg-deepsky-500/20 rounded-xl flex flex-col items-start transition-all group">
-                        <span class="text-xs font-bold text-deepsky-500 group-hover:text-white transition-colors">${escapeHtml(label)}</span>
+                        class="shrink-0 px-3 py-1.5 bg-brand-bg border border-sky-500/30 hover:border-sky-500 active:bg-sky-500/20 rounded-xl flex flex-col items-start transition-all group">
+                        <span class="text-xs font-bold text-sky-400 group-hover:text-white transition-colors">${escapeHtml(label)}</span>
                         <span class="text-[9px] text-zinc-400">${item.menge} Stk. • ${item.liter}L</span>
                     </button>
                 `;
@@ -637,7 +635,7 @@
         }
 
         // =================================================================
-        // BESTANDSLISTE (ALPHABETISCH NACH MARKE)
+        // BESTANDSLISTE (ALPHABETISCH NACH MARKE, MIT GESAMTLITER)
         // =================================================================
         function renderStock() {
             const container = document.getElementById("stockListContainer");
@@ -654,12 +652,12 @@
 
             // Filtern
             const filtered = items.filter(item => 
-                item.marke.toLowerCase().includes(searchTerm) ||
-                item.sorte.toLowerCase().includes(searchTerm) ||
-                item.id.toLowerCase().includes(searchTerm)
+                (item.marke || "").toLowerCase().includes(searchTerm) ||
+                (item.sorte || "").toLowerCase().includes(searchTerm) ||
+                (item.id || "").toLowerCase().includes(searchTerm)
             );
 
-            // Statistik berechnen
+            // Statistik
             let totalItems = 0;
             let totalLiters = 0;
             items.forEach(i => {
@@ -673,34 +671,34 @@
             if (filtered.length === 0) {
                 container.innerHTML = `
                     <div class="text-center py-8 text-zinc-500 text-xs">
-                        Keine Getränke im Bestand gefunden.
+                        Keine Getränke gefunden.
                     </div>
                 `;
                 return;
             }
 
             container.innerHTML = filtered.map(item => {
-                const totalVol = ((item.menge || 0) * (item.liter || 0)).toFixed(1);
-                const isLow = item.menge <= 5;
+                const itemTotalLiters = ((item.menge || 0) * (item.liter || 0)).toFixed(2);
+                const isLow = item.menge === 0;
 
                 return `
-                    <div class="bg-brand-card border border-brand-border rounded-xl p-3 flex justify-between items-center hover:border-zinc-700 transition-all">
+                    <div class="bg-brand-card border border-brand-border rounded-xl p-3 flex justify-between items-center">
                         <div class="space-y-0.5">
                             <div class="flex items-center gap-2">
                                 <span class="text-xs font-bold text-white">${escapeHtml(item.marke)}</span>
                                 <span class="text-[10px] bg-brand-bg px-1.5 py-0.5 rounded text-zinc-400 border border-brand-border">#${escapeHtml(item.id)}</span>
                             </div>
                             <div class="text-xs text-zinc-400">
-                                ${escapeHtml(item.sorte)} • <span class="text-deepsky-400 font-medium">${item.liter}L</span>
+                                ${escapeHtml(item.sorte)} • <span class="text-sky-400 font-medium">${item.liter}L</span>
                             </div>
                         </div>
 
                         <div class="text-right">
-                            <div class="text-sm font-extrabold ${isLow ? 'text-rose-400' : 'text-deepsky-400'}">
+                            <div class="text-sm font-extrabold ${isLow ? 'text-rose-400' : 'text-sky-400'}">
                                 ${item.menge} <span class="text-[10px] font-normal text-zinc-400">Stk.</span>
                             </div>
-                            <div class="text-[10px] text-zinc-500 font-medium">
-                                Gesamt: ${totalVol} Liter
+                            <div class="text-[10px] text-sky-400/80 font-medium">
+                                Gesamt: ${itemTotalLiters} Liter
                             </div>
                         </div>
                     </div>
@@ -715,7 +713,6 @@
             setSyncStatus("loading", "Lade Daten...");
 
             if (!CONFIG_BIN_ID || CONFIG_BIN_ID.includes("EINFUEGEN")) {
-                // Lokalen Speicher nutzen
                 const local = localStorage.getItem("getraenke_inventory");
                 if (local) {
                     try { inventory = JSON.parse(local); } catch(e) { inventory = sampleItems; }
@@ -729,21 +726,23 @@
 
             try {
                 const res = await fetch(`https://api.jsonbin.io/v3/b/${CONFIG_BIN_ID}/latest`, {
-                    headers: {
-                        "X-Master-Key": CONFIG_MASTER_KEY
-                    }
+                    headers: { "X-Master-Key": CONFIG_MASTER_KEY }
                 });
 
                 if (!res.ok) throw new Error("HTTP Fehler " + res.status);
                 const data = await res.json();
                 
-                if (data.record && typeof data.record === "object") {
+                // Format { "inventory": { ... } } oder direktes Objekt verarbeiten
+                if (data.record && data.record.inventory) {
+                    inventory = data.record.inventory;
+                } else if (data.record && typeof data.record === "object") {
                     inventory = data.record;
-                    localStorage.setItem("getraenke_inventory", JSON.stringify(inventory));
-                    setSyncStatus("ready", "JSONBin Synchronisiert");
                 }
+
+                localStorage.setItem("getraenke_inventory", JSON.stringify(inventory));
+                setSyncStatus("ready", "Synchronisiert");
             } catch (err) {
-                console.warn("JSONBin Sync fehlgeschlagen, lade lokal:", err);
+                console.warn("Sync fehlgeschlagen, lade lokal:", err);
                 const local = localStorage.getItem("getraenke_inventory");
                 if (local) {
                     try { inventory = JSON.parse(local); } catch(e) { inventory = sampleItems; }
@@ -773,11 +772,11 @@
                         "Content-Type": "application/json",
                         "X-Master-Key": CONFIG_MASTER_KEY
                     },
-                    body: JSON.stringify(inventory)
+                    body: JSON.stringify({ inventory: inventory })
                 });
 
                 if (!res.ok) throw new Error("HTTP " + res.status);
-                setSyncStatus("ready", "JSONBin Synchronisiert");
+                setSyncStatus("ready", "Synchronisiert");
             } catch (err) {
                 console.error("Speichern fehlgeschlagen:", err);
                 setSyncStatus("error", "Sync Fehler");
@@ -809,7 +808,7 @@
         }
 
         // =================================================================
-        // EINSTELLUNGEN & IMPORT / EXPORT
+        // EINSTELLUNGEN & EXPORT / IMPORT
         // =================================================================
         function openSettings() {
             document.getElementById("settingsModal").classList.remove("hidden");
@@ -856,22 +855,23 @@
             reader.onload = function(e) {
                 try {
                     const importedData = JSON.parse(e.target.result);
-                    if (typeof importedData === 'object') {
+                    if (importedData.inventory) {
+                        inventory = importedData.inventory;
+                    } else if (typeof importedData === 'object') {
                         inventory = importedData;
-                        saveInventoryData();
-                        showToast("Daten erfolgreich importiert");
-                        closeSettings();
                     } else {
                         throw new Error("Ungültiges Format");
                     }
+                    saveInventoryData();
+                    showToast("Daten erfolgreich importiert");
+                    closeSettings();
                 } catch (err) {
-                    showToast("Fehler beim Importieren der Datei");
+                    showToast("Fehler beim Importieren");
                 }
             };
             reader.readAsText(file);
         }
 
-        // Helper Toast
         function showToast(msg) {
             const toast = document.getElementById("toast");
             const toastMsg = document.getElementById("toastMsg");
@@ -881,7 +881,7 @@
             setTimeout(() => {
                 toast.classList.remove("opacity-100");
                 toast.classList.add("opacity-0", "pointer-events-none");
-            }, 2500);
+            }, 2200);
         }
 
         function escapeHtml(text) {
