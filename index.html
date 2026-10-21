@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Getränkelager</title>
+  <title>Getränkelager Verwaltung</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -14,9 +14,9 @@
         extend: {
           colors: {
             brand: {
-              bg: '#09090b',       // Dark Background (Zinc 950)
-              card: '#18181b',     // Card Background (Zinc 900)
-              border: '#27272a',   // Border Color (Zinc 800)
+              bg: '#09090b',       // Zinc 950
+              card: '#18181b',     // Zinc 900
+              border: '#27272a',   // Zinc 800
               sky: '#00bfff',      // Deep Sky Blue Accent
               skyHover: '#0099cc',
               amber: '#f59e0b',
@@ -31,7 +31,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
-    /* Safe-Area Padding für iPhone 13 mini & moderne Smartphones */
+    /* Safe Area Insets for Mobile Devices */
     body {
       padding-top: env(safe-area-inset-top);
       padding-bottom: env(safe-area-inset-bottom);
@@ -40,14 +40,14 @@
       user-select: none;
       -webkit-user-select: none;
     }
-    input, button {
+    input, button, select {
       touch-action: manipulation;
     }
   </style>
 </head>
 <body class="bg-brand-bg text-zinc-100 min-h-full font-sans antialiased flex flex-col justify-between">
 
-  <!-- 1. PIN-PROTECTION SCREEN (6 STREIFEN / PUNKTE) -->
+  <!-- 1. PIN SECURITY LOCK SCREEN (6 DIGIT PIN) -->
   <div id="pin-screen" class="fixed inset-0 bg-brand-bg z-50 flex flex-col items-center justify-center p-6">
     <div class="text-center mb-8">
       <div class="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto mb-4 text-brand-sky shadow-lg shadow-sky-950/30">
@@ -55,9 +55,10 @@
       </div>
       <h1 class="text-2xl font-bold tracking-tight text-white">Getränkelager</h1>
       <p class="text-sm text-zinc-400 mt-1">Bitte 6-stelligen PIN eingeben</p>
+      <p class="text-xs text-zinc-600 mt-1">(Standard-PIN: 123456)</p>
     </div>
 
-    <!-- 6 PIN-PUNKTE -->
+    <!-- 6 VISUAL PIN DOTS -->
     <div id="pin-dots" class="flex gap-3 mb-8">
       <div class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-zinc-700 bg-transparent transition-all duration-200"></div>
       <div class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-zinc-700 bg-transparent transition-all duration-200"></div>
@@ -67,7 +68,7 @@
       <div class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-zinc-700 bg-transparent transition-all duration-200"></div>
     </div>
 
-    <!-- NUMMERNPAD -->
+    <!-- NUMPAD -->
     <div class="grid grid-cols-3 gap-4 w-full max-w-[280px]">
       <button onclick="pressPinDigit('1')" class="h-16 rounded-full bg-brand-card border border-brand-border text-2xl font-semibold active:bg-zinc-800 transition-colors">1</button>
       <button onclick="pressPinDigit('2')" class="h-16 rounded-full bg-brand-card border border-brand-border text-2xl font-semibold active:bg-zinc-800 transition-colors">2</button>
@@ -91,10 +92,10 @@
   </div>
 
 
-  <!-- MAIN CONTAINER (iPhone 13 mini optimized: max-w-sm) -->
+  <!-- 2. MAIN APPLICATION CONTAINER (Optimized for iPhone 13 mini dimensions) -->
   <div id="app-container" class="hidden flex-1 max-w-sm mx-auto w-full p-4 flex flex-col pb-20">
     
-    <!-- HEADER -->
+    <!-- TOP HEADER BAR -->
     <header class="flex items-center justify-between py-3 mb-4 border-b border-brand-border">
       <div class="flex items-center gap-2">
         <i class="fa-solid fa-boxes-stacked text-brand-sky text-xl"></i>
@@ -110,7 +111,7 @@
 
     <!-- NAVIGATION TABS -->
     <div class="grid grid-cols-2 bg-brand-card p-1 rounded-xl border border-brand-border mb-4">
-      <button id="tab-inventory-btn" onclick="switchTab('inventory')" class="py-2 text-sm font-medium rounded-lg transition-all bg-brand-sky text-zinc-950 shadow-sm font-semibold">
+      <button id="tab-inventory-btn" onclick="switchTab('inventory')" class="py-2 text-sm font-medium rounded-lg transition-all bg-brand-sky text-zinc-950 font-semibold shadow-sm">
         <i class="fa-solid fa-list-ul mr-1"></i> Bestand
       </button>
       <button id="tab-quick-btn" onclick="switchTab('quick')" class="py-2 text-sm font-medium rounded-lg transition-all text-zinc-400 hover:text-white">
@@ -118,10 +119,10 @@
       </button>
     </div>
 
-    <!-- TAB 1: BESTANDSLISTE -->
+    <!-- TAB 1: INVENTORY LIST ('BESTAND') -->
     <div id="tab-inventory" class="space-y-4 flex-1">
       
-      <!-- Gesamtsumme Liter Dashboard Header -->
+      <!-- DASHBOARD METRICS HEADER -->
       <div class="bg-gradient-to-r from-zinc-900 to-zinc-900/80 p-4 rounded-xl border border-brand-border flex items-center justify-between shadow-sm">
         <div>
           <p class="text-xs text-zinc-400 uppercase tracking-wider font-semibold">Gesamter Lagerbestand</p>
@@ -133,24 +134,24 @@
         </div>
       </div>
 
-      <!-- Suchleiste -->
+      <!-- SEARCH BAR -->
       <div class="relative">
         <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 text-sm"></i>
         <input type="text" id="search-input" oninput="renderInventory()" placeholder="Marke oder Sorte suchen..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-brand-card border border-brand-border text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-brand-sky transition-colors">
       </div>
 
-      <!-- Artikelliste (Alphabetisch nach Marke) -->
+      <!-- INVENTORY ITEM CARDS (Alphabetically sorted by Brand) -->
       <div id="inventory-list" class="space-y-2.5">
-        <!-- Wird dynamisch aus JS gerendert -->
+        <!-- Dynamically rendered via JavaScript -->
       </div>
     </div>
 
-    <!-- TAB 2: SCHNELLAUSWAHL (+ / - Buchen) -->
+    <!-- TAB 2: QUICK ACTION ('SCHNELLAUSWAHL') -->
     <div id="tab-quick" class="hidden space-y-4 flex-1">
       <div class="bg-brand-card p-4 rounded-xl border border-brand-border">
         <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Getränk auswählen</label>
         <select id="quick-select" class="w-full bg-zinc-950 border border-brand-border rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-sky transition-colors">
-          <!-- Wird alphabetisch aus JS gerendert -->
+          <!-- Dynamically populated via JavaScript -->
         </select>
 
         <div class="grid grid-cols-2 gap-3 mt-4">
@@ -163,7 +164,7 @@
         </div>
       </div>
 
-      <!-- Neues Getränk Formular -->
+      <!-- CREATE NEW BEVERAGE FORM -->
       <div class="bg-brand-card p-4 rounded-xl border border-brand-border space-y-3">
         <h3 class="text-sm font-semibold text-white flex items-center gap-2 border-b border-brand-border pb-2">
           <i class="fa-solid fa-plus-circle text-brand-sky"></i> Neues Getränk anlegen
@@ -188,18 +189,40 @@
 
   </div>
 
-  <!-- JAVASCRIPT LOGIK -->
+  <!-- APPLICATION LOGIC & DATA MANAGEMENT -->
   <script>
     // -------------------------------------------------------------
-    // CONFIGURATION (JSONBin.io)
+    // CONFIGURATION & CLOUD CREDENTIALS
     // -------------------------------------------------------------
-    let CONFIG_BIN_ID = "6ad890beac6210605a4541a5";
-    let CONFIG_MASTER_KEY = "$2a$10$.mIeRoeBg89gaf9lEZn0vuOSzzGr4se/Z98CNP0ANIP2zCRkZzTkG";
+    let CONFIG_BIN_ID = "DEINE_BIN_ID_HIER_EINFUEGEN";
+    let CONFIG_MASTER_KEY = "DEIN_MASTER_KEY_HIER_EINFUEGEN";
 
-    // Standard PIN (6-stellig)
+    // 6-digit PIN Lock
     const PIN_CODE = "123456";
     let currentPinInput = "";
-    let inventoryData = {};
+    
+    // Initial Mock Inventory Data
+    let inventoryData = {
+      "1": { brand: "Fritz-Kola", sort: "Kola", volume: 0.33, stock: 24 },
+      "2": { brand: "Astra", sort: "Urtyp", volume: 0.33, stock: 18 },
+      "3": { brand: "Club Mate", sort: "Original", volume: 0.50, stock: 12 },
+      "4": { brand: "Paulaner", sort: "Spezi", volume: 0.50, stock: 30 }
+    };
+
+    // -------------------------------------------------------------
+    // ROBUST PROPERTY PARSER (Handles varied JSON keys)
+    // -------------------------------------------------------------
+    function parseItem(item) {
+      if (!item || typeof item !== 'object') {
+        return { brand: 'Unbekannt', variety: 'Standard', volume: 0, stock: 0 };
+      }
+      return {
+        brand: item.brand || item.Brand || 'Unbekannt',
+        variety: item.sort || item.variety || item.Sort || item.Variety || 'Standard',
+        volume: parseFloat(item.volume !== undefined ? item.volume : item.Volume) || 0,
+        stock: parseInt(item.stock !== undefined ? item.stock : (item.quantity !== undefined ? item.quantity : item.Stock)) || 0
+      };
+    }
 
     // -------------------------------------------------------------
     // PIN SECURITY SYSTEM
@@ -254,14 +277,13 @@
     }
 
     // -------------------------------------------------------------
-    // JSONBIN.IO SYNCHRONIZATION
+    // CLOUD SYNC & LOCAL STORAGE FALLBACK
     // -------------------------------------------------------------
     async function syncData() {
       const statusEl = document.getElementById('sync-status');
       statusEl.className = "w-2.5 h-2.5 rounded-full bg-brand-amber animate-pulse";
 
       if (!CONFIG_BIN_ID || CONFIG_BIN_ID.includes("DEINE_BIN_ID")) {
-        console.warn("JSONBin.io Credentials nicht gesetzt. Nutze LocalStorage als Fallback.");
         const local = localStorage.getItem('inventory_backup');
         if (local) inventoryData = JSON.parse(local);
         renderInventory();
@@ -277,13 +299,13 @@
           }
         });
 
-        if (!response.ok) throw new Error("Netzwerk-Fehler beim Laden");
+        if (!response.ok) throw new Error("Fehler beim Laden");
 
         const result = await response.json();
         if (result.record && result.record.inventory) {
           inventoryData = result.record.inventory;
-        } else {
-          inventoryData = {};
+        } else if (result.record && typeof result.record === 'object') {
+          inventoryData = result.record;
         }
 
         localStorage.setItem('inventory_backup', JSON.stringify(inventoryData));
@@ -329,7 +351,7 @@
     }
 
     // -------------------------------------------------------------
-    // UI RENDERING & SORTING
+    // UI RENDERING & ALPHABETICAL SORTING
     // -------------------------------------------------------------
     function renderInventory() {
       const container = document.getElementById('inventory-list');
@@ -339,21 +361,22 @@
       let totalLiters = 0;
       let totalItemsCount = 0;
 
-      // 1. In Array umwandeln & Alphabetisch nach MARKE sortieren
+      // Extract & Parse items
       const itemsArray = Object.keys(inventoryData).map(id => {
-        const item = inventoryData[id];
+        const parsed = parseItem(inventoryData[id]);
         return {
           id: id,
-          brand: item.brand || 'Unbekannt',
-          variety: item.sort || item.variety || 'Standard',
-          volume: parseFloat(item.volume) || 0,
-          quantity: parseInt(item.stock !== undefined ? item.stock : item.quantity) || 0
+          brand: parsed.brand,
+          variety: parsed.variety,
+          volume: parsed.volume,
+          quantity: parsed.stock
         };
       });
 
+      // Sort Alphabetically by Brand
       itemsArray.sort((a, b) => a.brand.localeCompare(b.brand, 'de', { sensitivity: 'base' }));
 
-      // 2. Filtern & Rendern
+      // Filter and render
       itemsArray.forEach(item => {
         const itemLiters = item.quantity * item.volume;
         totalLiters += itemLiters;
@@ -390,7 +413,6 @@
         }
       });
 
-      // Dashboard Summen aktualisieren
       document.getElementById('total-liters').innerHTML = `${totalLiters.toFixed(2)} <span class="text-sm font-normal text-zinc-400">Liter</span>`;
       document.getElementById('total-items').innerText = totalItemsCount;
     }
@@ -400,40 +422,41 @@
       select.innerHTML = '';
 
       const itemsArray = Object.keys(inventoryData).map(id => {
-        const item = inventoryData[id];
+        const parsed = parseItem(inventoryData[id]);
         return {
           id: id,
-          brand: item.brand || 'Unbekannt',
-          variety: item.sort || item.variety || 'Standard',
-          volume: parseFloat(item.volume) || 0
+          brand: parsed.brand,
+          variety: parsed.variety,
+          volume: parsed.volume
         };
       });
 
-      // Alphabetisch nach Marke sortieren
+      // Sort Alphabetically by Brand
       itemsArray.sort((a, b) => a.brand.localeCompare(b.brand, 'de', { sensitivity: 'base' }));
 
       itemsArray.forEach(item => {
         const opt = document.createElement('option');
         opt.value = item.id;
-        // Format: MARKE - Sorte (0.xx L)
         opt.textContent = `${item.brand} - ${item.variety} (${item.volume}L)`;
         select.appendChild(opt);
       });
     }
 
     // -------------------------------------------------------------
-    // LOGIK-AKTIONEN
+    // STOCK ADJUSTMENTS & ACTIONS
     // -------------------------------------------------------------
     function adjustStock(id, delta) {
       if (!inventoryData[id]) return;
       
-      let currentStock = inventoryData[id].stock !== undefined ? inventoryData[id].stock : inventoryData[id].quantity;
-      currentStock = Math.max(0, (parseInt(currentStock) || 0) + delta);
+      const parsed = parseItem(inventoryData[id]);
+      const newStock = Math.max(0, parsed.stock + delta);
       
       if (inventoryData[id].stock !== undefined) {
-        inventoryData[id].stock = currentStock;
+        inventoryData[id].stock = newStock;
+      } else if (inventoryData[id].quantity !== undefined) {
+        inventoryData[id].quantity = newStock;
       } else {
-        inventoryData[id].quantity = currentStock;
+        inventoryData[id].stock = newStock;
       }
 
       renderInventory();
